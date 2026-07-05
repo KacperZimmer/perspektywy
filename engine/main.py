@@ -1,54 +1,66 @@
+from unittest import result
 import feedparser
+import requests
 import trafilatura
 from dataclasses import dataclass
 import json
+from trafilatura import extract
 
-SOURCES_CONFIG = [
-    {
-        "name": "TVN24",
-        "url": "https://tvn24.pl/sitemap_news.xml",
-        "type": "sitemap_news"
-    },
-    {
-        "name": "Onet",
-        "url": "https://wiadomosci.onet.pl/.feed",
-        "type": "rss"
-    },
-    {
-        "name": "wPolityce",
-        "url": "https://wpolityce.pl/feed",
-        "type": "rss"
-    },
-    {
-        "name": "OKO.press",
-        "url": "https://oko.press/sitemap.xml",
-        "type": "sitemap_standard"
-    }
-]
+from test_sources import SOURCES, headers
 
-import feedparser
-import requests
-from bs4 import BeautifulSoup
 
-def get_urls_from_rss(rss_url, max_urls=5):
-    feed = feedparser.parse(rss_url)
-    return [entry.link for entry in feed.entries[:max_urls]]
+def agg_news_artictles(data_news_companies_map):
+    collected_data = []
 
-def get_urls_from_sitemap(sitemap_url, max_urls=5):
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(sitemap_url, headers=headers)
-    if response.status_code != 200:
-        return []
-    soup = BeautifulSoup(response.content, 'xml')
-    return [loc.text for loc in soup.find_all('loc')][:max_urls]
+    for source in data_news_companies_map:
+        if source.get('type') != 'rss':
+            continue
 
-# Dyspozytor
-def collect_urls_for_source(source):
-    print(f"Szukam linków dla: {source['name']} ({source['type']})")
-    if "sitemap" in source['type']:
-        return get_urls_from_sitemap(source['url'])
-    elif source['type'] == "rss":
-        return get_urls_from_rss(source['url'])
-    else:
-        return []
+        try:
+            response = requests.get(source['url'], headers=headers, timeout=10)
+            feed = feedparser.parse(response.content)
+        except Exception as e:
+            print(f"Błąd sieci dla {source['name']}: {e}")
+            continue
 
+        print(f"\nPrzeszukuję: {source['name']}...")
+
+        for entry in feed.entries[:5]:
+            print(f"  -> Ekstrakcja: {entry.link}")
+
+            downloaded = trafilatura.fetch_url(entry.link)
+
+            if not downloaded:
+                print("     (Nie udało się pobrać HTML)")
+                continue
+
+            metadata = extract(downloaded, output_format="json", with_metadata=True)
+
+            if not metadata:
+                print("     (Błąd ekstrakcji)")
+                continue
+
+            data = json.loads(metadata)
+            text = data.get('text')
+
+            if not text:
+                print("     (Brak treści w artykule)")
+                continue
+
+            collected_data.append({
+                "source_id": source["id"],
+                "source_name": source["name"],
+                "bias": source["bias"],
+                "title": data.get("title", entry.title),
+                "url": entry.link,
+                "text_for_embedding": f"{data.get('title', entry.title)}. {text[:800]}"
+            })
+
+    with open('articles.jsonl', 'w', encoding='utf-8') as f:
+        for article in collected_data:
+            f.write(json.dumps(article, ensure_ascii=False) + '\n')
+
+    print(f"\nSukces! Zapisano łącznie {len(collected_data)} artykułów do pliku 'articles.jsonl'.")
+
+
+agg_news_artictles(SOURCES)
