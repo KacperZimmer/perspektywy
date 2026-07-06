@@ -44,7 +44,7 @@ def agg_news_artictles(data_news_companies_map):
             text = data.get('text')
 
             if not text:
-                print("     (Brak treści w artykule)")
+                print("(Brak treści w artykule)")
                 continue
 
             collected_data.append({
@@ -56,7 +56,7 @@ def agg_news_artictles(data_news_companies_map):
                 "text_for_embedding": f"{data.get('title', entry.title)}. {text[:800]}"
             })
 
-    with open('articles.jsonl', 'w', encoding='utf-8') as f:
+    with open('articles.jsonl', 'a', encoding='utf-8') as f:
         for article in collected_data:
             f.write(json.dumps(article, ensure_ascii=False) + '\n')
 
