@@ -2,6 +2,9 @@ import json
 import numpy as np
 import ollama
 from sklearn.metrics.pairwise import cosine_similarity
+from collections import defaultdict
+from sklearn.cluster import HDBSCAN
+import umap
 
 article_list = []
 seen_titles = set()
@@ -34,25 +37,70 @@ for text in texts_to_embed:
 embeddings_matrix = np.array(embeddings)
 similarity_matrix = cosine_similarity(embeddings_matrix)
 
-pairs = []
-num_articles = len(article_list)
 
-for i in range(num_articles):
-    for j in range(i + 1, num_articles):
-        score = similarity_matrix[i][j]
-        pairs.append({
-            "title_a": article_list[i].get('title', 'Brak tytułu'),
-            "source_a": article_list[i].get('source_name', 'Nieznane źródło'),
-            "title_b": article_list[j].get('title', 'Brak tytułu'),
-            "source_b": article_list[j].get('source_name', 'Nieznane źródło'),
-            "similarity": float(score)
-        })
 
-pairs.sort(key=lambda x: x['similarity'], reverse=True)
+print("\nRedukcja wymiarów embeddingów przy użyciu UMAP...")
 
-print("\n=== TOP 10 NAJBARDZIEJ PODOBNE UNIKALNE ARTYKUŁY ===")
-for pair in pairs[:10]:
-    print(f"Podobieństwo: {pair['similarity']:.4f}")
-    print(f"  • Artykuł A: [{pair['source_a']}] {pair['title_a']}")
-    print(f"  • Artykuł B: [{pair['source_b']}] {pair['title_b']}")
-    print("-" * 40)
+dimension_reducer = umap.UMAP(
+    n_components=5,
+    n_neighbors=10,
+    min_dist=0.0,
+    metric='cosine',
+    random_state=42
+)
+
+reduced_embeddings = dimension_reducer.fit_transform(embeddings_matrix)
+print(f"Kształt po redukcji UMAP: {reduced_embeddings.shape}")
+
+
+print("Grupowanie artykułów przy użyciu HDBSCAN...")
+
+clusterer = HDBSCAN(
+    min_cluster_size=3,
+    min_samples=2,
+)
+
+cluster_labels = clusterer.fit_predict(reduced_embeddings)
+
+
+clusters = defaultdict(list)
+
+for idx, label in enumerate(cluster_labels):
+    clusters[label].append({
+        "title": article_list[idx]['title'],
+        "source": article_list[idx]['source_name']
+    })
+
+
+deduplicated_clusters = {}
+
+for cluster_id, articles_in_cluster in clusters.items():
+    if cluster_id == -1:
+        continue
+
+    unique_source_articles = {}
+
+    for article in articles_in_cluster:
+        source = article['source']
+
+        if source not in unique_source_articles:
+            unique_source_articles[source] = article
+        else:
+
+            pass
+
+    filtered_articles = list(unique_source_articles.values())
+
+
+    if len(filtered_articles) >= 2:
+        deduplicated_clusters[cluster_id] = filtered_articles
+
+
+print("\n" + "=" * 50)
+print("WYNIKI KLASTERYZACJI (BEZ DUPLIKATÓW Z TEGO SAMEGO ŹRÓDŁA)")
+print("=" * 50)
+
+for cluster_id, articles in deduplicated_clusters.items():
+    print(f"\n🟢 TEMAT {cluster_id} [{len(articles)} różnych źródeł]:")
+    for article in articles:
+        print(f"  - [{article['source']}] {article['title']}")

@@ -1,8 +1,6 @@
-from unittest import result
 import feedparser
 import requests
 import trafilatura
-from dataclasses import dataclass
 import json
 from trafilatura import extract
 
@@ -25,7 +23,7 @@ def agg_news_artictles(data_news_companies_map):
 
         print(f"\nPrzeszukuję: {source['name']}...")
 
-        for entry in feed.entries[:5]:
+        for entry in feed.entries:
             print(f"  -> Ekstrakcja: {entry.link}")
 
             downloaded = trafilatura.fetch_url(entry.link)
