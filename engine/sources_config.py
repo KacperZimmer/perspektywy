@@ -1,7 +1,9 @@
 # sources_config.py
 
 SOURCES = [
+    # ==========================================
     # --- CENTRUM / MAINSTREAM ---
+    # ==========================================
     {
         "id": "onet",
         "name": "Onet",
@@ -30,10 +32,35 @@ SOURCES = [
         "type": "rss",
         "bias": "center"
     },
+    {
+        "id": "rmf24",
+        "name": "RMF24",
+        "url": "https://www.rmf24.pl/feed",
+        "type": "rss",
+        "bias": "center"
+    },
 
+    # ==========================================
+    # --- BIZNES / GOSPODARKA ---
+    # ==========================================
+    {
+        "id": "money_pl",
+        "name": "Money.pl",
+        "url": "https://www.money.pl/rss/",
+        "type": "rss",
+        "bias": "center"
+    },
+    {
+        "id": "bankier",
+        "name": "Bankier.pl",
+        "url": "https://www.bankier.pl/rss/wiadomosci.xml",
+        "type": "rss",
+        "bias": "center"
+    },
+
+    # ==========================================
     # --- PRAWICA / KONSERWATYWNE ---
-
-
+    # ==========================================
     {
         "id": "dorzeczy",
         "name": "DoRzeczy.pl",
@@ -41,8 +68,24 @@ SOURCES = [
         "type": "rss",
         "bias": "right"
     },
+    {
+        "id": "radio_maryja",
+        "name": "Radio Maryja",
+        "url": "https://www.radiomaryja.pl/feed/",
+        "type": "rss",
+        "bias": "right"
+    },
+    {
+        "id": "kresy_pl",
+        "name": "Kresy.pl",
+        "url": "https://kresy.pl/feed/",
+        "type": "rss",
+        "bias": "right"
+    },
 
-    # --- LEWICA / PROGRESYWNE ---
+    # ==========================================
+    # --- LEWICA / PROGRESYWNE / PRACOWNICZE --
+    # ==========================================
     {
         "id": "oko_press",
         "name": "OKO.press",
@@ -57,13 +100,11 @@ SOURCES = [
         "type": "rss",
         "bias": "left"
     },
-
     {
-        "id": "bankier",
-        "name": "Bankier.pl",
-        "url": "https://www.bankier.pl/rss/wiadomosci.xml",
+        "id": "strajk",
+        "name": "Strajk.eu",
+        "url": "https://strajk.eu/feed/",
         "type": "rss",
-        "bias": "economy"
-    },
-
+        "bias": "left"
+    }
 ]

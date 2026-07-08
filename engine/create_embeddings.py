@@ -2,18 +2,14 @@ import json
 import numpy as np
 import ollama
 from collections import defaultdict
-from sklearn.cluster import HDBSCAN
-import umap
+from sklearn.cluster import AgglomerativeClustering
 
 
 def load_and_deduplicate_articles(filepath: str) -> list:
-    """
-    Wczytuje artykuły z pliku JSONL i usuwa duplikaty na podstawie tytułu.
-    """
     article_list = []
     seen_titles = set()
 
-    with open(filepath, "r") as file:
+    with open(filepath, "r", encoding="utf-8") as file:
         for line in file:
             data = json.loads(line.strip())
             title = data.get('title', '')
@@ -27,19 +23,17 @@ def load_and_deduplicate_articles(filepath: str) -> list:
 
 
 def prepare_texts_for_embedding(article_list: list) -> list:
-    """
-    Przygotowuje teksty do wektoryzacji. Omija źródło, by nie biasować modelu.
-    """
-    return [
-        f"passage: {article['title']} {article['text_for_embedding']}"
-        for article in article_list
-    ]
+    texts = []
+    for article in article_list:
+        title = article.get('title', '')
+        text_body = article.get('text_for_embedding', '').replace(title, "").strip()[:400]
+
+        full_text = f"Wydarzenie: {title}. Kontekst: {text_body}"
+        texts.append(full_text)
+    return texts
 
 
-def generate_embeddings(texts: list, model_name: str = "jeffh/intfloat-multilingual-e5-large:Q8_0") -> np.ndarray:
-    """
-    Generuje embeddingi za pomocą Ollamy dla listy tekstów.
-    """
+def generate_embeddings(texts: list, model_name: str = "bge-m3") -> np.ndarray:
     print(f"Generuję embeddingi przez Ollama (model: {model_name})...")
     embedded_texts = []
 
@@ -52,62 +46,38 @@ def generate_embeddings(texts: list, model_name: str = "jeffh/intfloat-multiling
     return embeddings_array
 
 
-def reduce_dimensions_umap(embeddings: np.ndarray, n_components: int = 5, n_neighbors: int = 10) -> np.ndarray:
+def cluster_news_agglomerative(embeddings: np.ndarray, distance_threshold: float = 0.20) -> np.ndarray:
     """
-    Redukuje wymiarowość macierzy embeddingów używając UMAP.
+    Używamy Agglomerative Clustering na surowych wektorach.
+    distance_threshold to najważniejszy parametr!
+    0.20 oznacza, że teksty muszą być w ~80% podobne, aby uznać je za to samo wydarzenie.
     """
-    print("\nRedukcja wymiarów embeddingów przy użyciu UMAP...")
-    reducer = umap.UMAP(
-        n_components=n_components,
-        n_neighbors=n_neighbors,
-        min_dist=0.0,
+    print(f"\nGrupowanie Agglomerative (próg dystansu: {distance_threshold})...")
+    clusterer = AgglomerativeClustering(
+        n_clusters=None,
         metric='cosine',
-        random_state=42
+        linkage='average',
+        distance_threshold=distance_threshold
     )
-    reduced = reducer.fit_transform(embeddings)
-    print(f"Kształt po redukcji UMAP: {reduced.shape}")
-    return reduced
-
-
-def cluster_with_hdbscan(reduced_embeddings: np.ndarray, min_cluster_size: int = 3, min_samples: int = 2) -> np.ndarray:
-    """
-    Grupuje zredukowane embeddingi za pomocą algorytmu HDBSCAN.
-    """
-    print("Grupowanie artykułów przy użyciu HDBSCAN...")
-    clusterer = HDBSCAN(
-        min_cluster_size=min_cluster_size,
-        min_samples=min_samples,
-        metric='euclidean'
-    )
-    return clusterer.fit_predict(reduced_embeddings)
+    return clusterer.fit_predict(embeddings)
 
 
 def map_labels_to_articles(article_list: list, labels: np.ndarray) -> dict:
-    """
-    Łączy oryginalne artykuły z wygenerowanymi etykietami klastrów.
-    """
     clusters = defaultdict(list)
     for idx, label in enumerate(labels):
         clusters[label].append({
-            "title": article_list[idx]['title'],
-            "source": article_list[idx]['source_name']
+            "title": article_list[idx].get('title', ''),
+            "source": article_list[idx].get('source_name', 'Nieznane źródło'),
+            "index": idx
         })
     return clusters
 
 
 def deduplicate_cluster_sources(clusters: dict, min_unique_sources: int = 2) -> dict:
-    """
-    Przetwarza klastry: zostawia tylko po jednym artykule z danej redakcji (źródła).
-    Odrzuca klastry, które mają mniej unikalnych źródeł niż zdefiniowane minimum.
-    Szum (-1) zostaje nienaruszony.
-    """
     deduplicated_clusters = {}
+    noise_articles = []
 
     for cluster_id, articles in clusters.items():
-        if cluster_id == -1:
-            deduplicated_clusters[cluster_id] = articles
-            continue
-
         unique_source_articles = {}
         for article in articles:
             source = article['source']
@@ -118,23 +88,29 @@ def deduplicate_cluster_sources(clusters: dict, min_unique_sources: int = 2) -> 
 
         if len(filtered_articles) >= min_unique_sources:
             deduplicated_clusters[cluster_id] = filtered_articles
+        else:
+            noise_articles.extend(filtered_articles)
+
+    if noise_articles:
+        deduplicated_clusters[-1] = noise_articles
 
     return deduplicated_clusters
 
 
 def print_clusters(clusters: dict):
-    """
-    Wypisuje sformatowane wyniki klasteryzacji do konsoli.
-    """
     print("\n" + "=" * 50)
     print("WYNIKI KLASTERYZACJI (BEZ DUPLIKATÓW Z TEGO SAMEGO ŹRÓDŁA)")
     print("=" * 50)
 
-    sorted_clusters = sorted(clusters.items(), key=lambda item: item[0])
+    # Sortujemy klastry od największego (najwięcej źródeł), a szum (-1) dajemy na sam dół
+    sorted_clusters = sorted(
+        clusters.items(),
+        key=lambda item: (item[0] == -1, -len(item[1]))
+    )
 
     for cluster_id, articles in sorted_clusters:
         if cluster_id == -1:
-            print(f"\n⚫ SZUM (artykuły niepasujące do żadnej grupy) [{len(articles)}]:")
+            print(f"\n⚫ SZUM (pojedyncze newsy, brak potwierdzenia z wielu źródeł) [{len(articles)}]:")
         else:
             print(f"\n🟢 TEMAT {cluster_id} [{len(articles)} różnych źródeł]:")
 
@@ -143,20 +119,23 @@ def print_clusters(clusters: dict):
 
 
 def main():
-
     filepath = "articles.jsonl"
     articles = load_and_deduplicate_articles(filepath)
+
+    if len(articles) < 15:
+        print("Błąd: Za mało artykułów do przeprowadzenia klasteryzacji (minimum to 15). Sprawdź plik z danymi.")
+        return
+
     texts_to_embed = prepare_texts_for_embedding(articles)
 
     embeddings = generate_embeddings(texts_to_embed)
 
-    reduced_embeddings = reduce_dimensions_umap(embeddings, n_components=5, n_neighbors=10)
-    cluster_labels = cluster_with_hdbscan(reduced_embeddings, min_cluster_size=3, min_samples=2)
+    cluster_labels = cluster_news_agglomerative(embeddings, distance_threshold=0.35)
 
     raw_clusters = map_labels_to_articles(articles, cluster_labels)
-    final_clusters = deduplicate_cluster_sources(raw_clusters, min_unique_sources=2)
+    deduplicated_clusters = deduplicate_cluster_sources(raw_clusters, min_unique_sources=2)
 
-    print_clusters(final_clusters)
+    print_clusters(deduplicated_clusters)
 
 
 if __name__ == "__main__":
