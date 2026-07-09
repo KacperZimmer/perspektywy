@@ -39,9 +39,27 @@ SOURCES = [
         "type": "rss",
         "bias": "center"
     },
+    {
+        "id": "wprost",
+        "name": "Wprost",
+        "url": "https://www.wprost.pl/rss/",
+        "type": "rss",
+        "bias": "center"
+    },
 
     # ==========================================
-    # --- BIZNES / GOSPODARKA ---
+    # --- TABLOIDY (Zazwyczaj Centrum) ---
+    # ==========================================
+    {
+        "id": "fakt",
+        "name": "Fakt",
+        "url": "https://www.fakt.pl/rss",
+        "type": "rss",
+        "bias": "center"
+    },
+
+    # ==========================================
+    # --- BIZNES / GOSPODARKA / TECHNOLOGIA ---
     # ==========================================
     {
         "id": "money_pl",
@@ -54,6 +72,13 @@ SOURCES = [
         "id": "bankier",
         "name": "Bankier.pl",
         "url": "https://www.bankier.pl/rss/wiadomosci.xml",
+        "type": "rss",
+        "bias": "center"
+    },
+    {
+        "id": "defence24",
+        "name": "Defence24",
+        "url": "https://defence24.pl/rss",
         "type": "rss",
         "bias": "center"
     },
@@ -82,9 +107,16 @@ SOURCES = [
         "type": "rss",
         "bias": "right"
     },
+    {
+        "id": "nczas",
+        "name": "Najwyższy Czas!",
+        "url": "https://nczas.info/feed/",
+        "type": "rss",
+        "bias": "right"
+    },
 
     # ==========================================
-    # --- LEWICA / PROGRESYWNE / PRACOWNICZE --
+    # --- LEWICA / PROGRESYWNE ---
     # ==========================================
     {
         "id": "oko_press",
@@ -104,6 +136,27 @@ SOURCES = [
         "id": "strajk",
         "name": "Strajk.eu",
         "url": "https://strajk.eu/feed/",
+        "type": "rss",
+        "bias": "left"
+    },
+    {
+        "id": "tygodnik_powszechny",
+        "name": "Tygodnik Powszechny",
+        "url": "https://www.tygodnikpowszechny.pl/rss.xml",
+        "type": "rss",
+        "bias": "left"
+    },
+    {
+        "id": "wiez",
+        "name": "Więź",
+        "url": "https://wiez.pl/feed/",
+        "type": "rss",
+        "bias": "left"
+    },
+    {
+        "id": "nowy_obywatel",
+        "name": "Nowy Obywatel",
+        "url": "https://nowyobywatel.pl/feed/",
         "type": "rss",
         "bias": "left"
     }
