@@ -2,4 +2,4 @@
 .idea
 __pycache__/
 /engine/articles.jsonl
-
+/database/database.ini

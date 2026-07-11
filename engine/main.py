@@ -6,6 +6,8 @@ from trafilatura import extract
 
 from test_sources import SOURCES, headers
 
+def load_articles_into_db(data_news_companies_map):
+    pass
 
 def agg_news_artictles(data_news_companies_map):
     collected_data = []
