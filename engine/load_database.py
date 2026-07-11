@@ -1,13 +1,38 @@
 import feedparser
+import psycopg2
 import requests
 import trafilatura
 import json
 from trafilatura import extract
-
+from configparser import ConfigParser
 from test_sources import SOURCES, headers
 
-def load_articles_into_db(data_news_companies_map):
-    pass
+def connect(config):
+    """ Connect to the PostgreSQL database server """
+    try:
+        with psycopg2.connect(**config) as conn:
+            print('Connected to the PostgreSQL server.')
+            return conn
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
+
+def get_db_config(filename='database.ini', section='postgresql') -> dict:
+
+    parser = ConfigParser()
+    parser.read(filename)
+
+    config = {}
+
+    if parser.has_section(section):
+        params = parser.items(section)
+
+        for param in params:
+            config[param[0]] = param[1]
+    else:
+        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
+
+    return config
+
 
 def agg_news_artictles(data_news_companies_map):
     collected_data = []
@@ -63,4 +88,7 @@ def agg_news_artictles(data_news_companies_map):
     print(f"\nSukces! Zapisano łącznie {len(collected_data)} artykułów do pliku 'articles.jsonl'.")
 
 
-agg_news_artictles(SOURCES)
+# agg_news_artictles(SOURCES)
+
+db_config = get_db_config()
+connect(db_config)
