@@ -1,5 +1,5 @@
 .venv
 .idea
 __pycache__/
-/engine/articles.jsonl
-/engine/database.ini
+/data_scraper/articles.jsonl
+/data_scraper/database.ini

@@ -3,9 +3,52 @@ import psycopg2
 import requests
 import trafilatura
 import json
+
+from psycopg2._psycopg import cursor
 from trafilatura import extract
 from configparser import ConfigParser
-from test_sources import SOURCES, headers
+
+from data_scraper.test_sources import SOURCES, headers
+from analytics_engine.create_embeddings import (
+    prepare_texts_for_embedding,
+    generate_embeddings,
+)
+
+def create_init_db():
+      create_table_command = """
+          CREATE TABLE IF NOT EXISTS embedded_articles(
+              id bigserial primary key,
+              title text,
+              source text,
+              embedding vector(1024)
+          );
+      """
+      conn = None
+      try:
+          conn = psycopg2.connect(
+              host='localhost',
+              database='kontekst_db',
+              user='newuser',
+              password='password'
+          )
+          cur = conn.cursor()
+          cur.execute(create_table_command)
+          cur.close()
+          conn.commit()
+
+          print("✅ Tabela embedded_articles utworzona pomyślnie.")
+      except psycopg2.OperationalError as e:
+          print(f"❌ Błąd połączenia z bazą: {e}")
+      except psycopg2.ProgrammingError as e:
+          print(f"❌ Błąd polecenia SQL: {e}")
+      except Exception as e:
+          print(f"❌ Nieoczekiwany błąd: {e}")
+      finally:
+          if conn:
+              conn.close()
+              print("🔌 Połączenie zamknięte.")
+
+
 
 def connect(config):
     """ Connect to the PostgreSQL database server """
@@ -16,28 +59,17 @@ def connect(config):
     except (psycopg2.DatabaseError, Exception) as error:
         print(error)
 
-def get_db_config(filename='database.ini', section='postgresql') -> dict:
-
-    parser = ConfigParser()
-    parser.read(filename)
-
-    config = {}
-
-    if parser.has_section(section):
-        params = parser.items(section)
-
-        for param in params:
-            config[param[0]] = param[1]
-    else:
-        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
-
-    return config
-
 
 def agg_news_artictles(data_news_companies_map):
     collected_data = []
 
     for source in data_news_companies_map:
+
+        if len(collected_data) >= 100:
+            clean_data = prepare_texts_for_embedding(collected_data)
+            generate_embeddings(clean_data)
+
+            collected_data = []
         if source.get('type') != 'rss':
             continue
 
@@ -50,7 +82,9 @@ def agg_news_artictles(data_news_companies_map):
 
         print(f"\nPrzeszukuję: {source['name']}...")
 
+
         for entry in feed.entries:
+
             print(f"  -> Ekstrakcja: {entry.link}")
 
             downloaded = trafilatura.fetch_url(entry.link)
@@ -78,8 +112,11 @@ def agg_news_artictles(data_news_companies_map):
                 "bias": source["bias"],
                 "title": data.get("title", entry.title),
                 "url": entry.link,
-                "text_for_embedding": f"{data.get('title', entry.title)}. {text[:800]}"
+                "text_for_embedding": f"{data.get('title', entry.title)}. {text}"
             })
+
+
+
 
     with open('articles.jsonl', 'a', encoding='utf-8') as f:
         for article in collected_data:
@@ -88,7 +125,6 @@ def agg_news_artictles(data_news_companies_map):
     print(f"\nSukces! Zapisano łącznie {len(collected_data)} artykułów do pliku 'articles.jsonl'.")
 
 
-# agg_news_artictles(SOURCES)
+# agg_news_artictles(SOURCES)  # uruchamiane przez main.py
 
-db_config = get_db_config()
-connect(db_config)
+create_init_db()

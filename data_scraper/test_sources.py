@@ -2,7 +2,7 @@ import pytest
 import requests
 import feedparser
 
-from engine.sources_config import SOURCES
+from analytics_engine.sources_config import SOURCES
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'

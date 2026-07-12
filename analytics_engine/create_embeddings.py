@@ -40,6 +40,7 @@ def prepare_texts_for_embedding(article_list: list) -> list:
 
         full_text = f"{title}. {safe_text}"
         texts.append(full_text)
+
     return texts
 
 
@@ -205,7 +206,7 @@ def print_clusters(clusters: dict):
 
 
 def main():
-    filepath = "articles.jsonl"
+    filepath = "../data_scraper/articles.jsonl"
 
     articles = load_and_deduplicate_articles(filepath)
     if len(articles) < 15:
