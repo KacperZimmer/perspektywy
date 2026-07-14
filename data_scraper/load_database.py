@@ -93,7 +93,7 @@ def create_init_db():
             conn.close()
 
 
-def agg_news_artictles(data_news_companies_map):
+def agg_news_artictles(data_news_companies_map, num_of_data_to_collect : int):
     collected_data = []
 
     for source in data_news_companies_map:
@@ -138,7 +138,7 @@ def agg_news_artictles(data_news_companies_map):
                 "text_for_embedding": f"{data.get('title', entry.title)}. {text}"
             })
 
-            if len(collected_data) >= 10:
+            if len(collected_data) >= num_of_data_to_collect:
                 clean_data = prepare_texts_for_embedding(collected_data)
                 embeddings = generate_embeddings(clean_data)
                 save_data_to_postgres(embeddings, collected_data)
@@ -154,6 +154,6 @@ def agg_news_artictles(data_news_companies_map):
 
 
 create_init_db()
-agg_news_artictles(SOURCES)  # uruchamiane przez main.py
+agg_news_artictles(SOURCES, 20)
 
 

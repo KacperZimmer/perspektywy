@@ -1,30 +1,44 @@
-import json
-import re
 import textwrap
+from typing import Any
+
+import psycopg2
 from collections import defaultdict
 import numpy as np
 import ollama
 from sklearn.cluster import AgglomerativeClustering
 
 
-def load_and_deduplicate_articles(filepath: str) -> list:
-    """Ładuje artykuły z pliku JSONL i usuwa dokładne duplikaty po tytule."""
-    article_list = []
-    seen_titles = set()
 
-    with open(filepath, "r", encoding="utf-8") as file:
-        for line in file:
-            if not line.strip():
-                continue
-            data = json.loads(line.strip())
-            title = data.get("title", "")
+def fetch_articles_from_database() -> list[tuple[Any, ...]] | None:
+    # https://stackoverflow.com/questions/10598002/how-do-i-get-tables-in-postgres-using-psycopg2
+    conn = None
 
-            if title and title not in seen_titles:
-                seen_titles.add(title)
-                article_list.append(data)
+    try:
+        conn = psycopg2.connect(host='localhost', user='newuser', password='password', database='kontekst_db')
 
-    print(f"Załadowano {len(article_list)} unikalnych artykułów.")
-    return article_list
+        cur = conn.cursor()
+
+        cur.execute('select * from embedded_articles limit 5;')
+
+        result = cur.fetchall()
+
+
+        return result
+
+
+
+    except psycopg2.OperationalError as e:
+        print(f"Bład operacyjny {e}")
+    except psycopg2.ProgrammingError as e:
+        print(f"bład programistyczny {e}")
+    except Exception as e:
+        print(f'Blad ogolny {e}')
+    finally:
+        if conn:
+            conn.close()
+
+
+
 
 
 def prepare_texts_for_embedding(article_list: list) -> list:
@@ -74,29 +88,6 @@ def cluster_news_agglomerative(
     return clusterer.fit_predict(embeddings)
 
 
-def extract_keywords(title: str) -> set:
-    """Wyciąga z tytułu unikalne słowa kluczowe o długości minimum 4 znaków."""
-    words = re.findall(r"\b\w{4,}\b", title.lower())
-    stop_words = {
-        "ponad",
-        "tylko",
-        "będzie",
-        "czego",
-        "przez",
-        "teraz",
-        "bardzo",
-        "oto",
-        "dlaczego",
-        "wraz",
-        "oraz",
-        "jednak",
-        "mimo",
-        "jednego",
-        "przed",
-        "będą",
-    }
-    return set(w for w in words if w not in stop_words)
-
 
 def map_labels_to_articles(article_list: list, labels: np.ndarray) -> dict:
     """Mapuje artykuły do klastrów i stosuje Entity Guard do rozbicia sztucznych zbitek."""
@@ -121,14 +112,9 @@ def map_labels_to_articles(article_list: list, labels: np.ndarray) -> dict:
         sub_clusters = []
 
         for article in articles:
-            article_keywords = extract_keywords(article["title"])
             placed = False
 
             for sub_cluster in sub_clusters:
-                if any(
-                    article_keywords & extract_keywords(existing["title"])
-                    for existing in sub_cluster
-                ):
                     sub_cluster.append(article)
                     placed = True
                     break
@@ -204,28 +190,25 @@ def print_clusters(clusters: dict):
             for article in articles:
                 print(f"  - [{article['source']}] {article['title']}")
 
+result = fetch_articles_from_database()
 
-def main():
-    filepath = "../data_scraper/articles.jsonl"
+for element in result:
+    print(element[])
 
-    articles = load_and_deduplicate_articles(filepath)
-    if len(articles) < 15:
-        print(
-            "Błąd: Za mało artykułów do przeprowadzenia klasteryzacji (minimum to 15)."
-        )
-        return
-
-    texts_to_embed = prepare_texts_for_embedding(articles)
-    embeddings = generate_embeddings(texts_to_embed)
-
-    cluster_labels = cluster_news_agglomerative(embeddings, distance_threshold=0.30)
-
-    raw_clusters = map_labels_to_articles(articles, cluster_labels)
-
-    processed_clusters = deduplicate_cluster_sources(raw_clusters)
-
-    print_clusters(processed_clusters)
-
-
-if __name__ == "__main__":
-    main()
+    # articles = load_and_deduplicate_articles(filepath)
+    # if len(articles) < 15:
+    #     print(
+    #         "Błąd: Za mało artykułów do przeprowadzenia klasteryzacji (minimum to 15)."
+    #     )
+    #     return
+    #
+    # texts_to_embed = prepare_texts_for_embedding(articles)
+    # embeddings = generate_embeddings(texts_to_embed)
+    #
+    # cluster_labels = cluster_news_agglomerative(embeddings, distance_threshold=0.30)
+    #
+    # raw_clusters = map_labels_to_articles(articles, cluster_labels)
+    #
+    # processed_clusters = deduplicate_cluster_sources(raw_clusters)
+    #
+    # print_clusters(processed_clusters)
