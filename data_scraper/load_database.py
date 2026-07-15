@@ -129,13 +129,14 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect : int):
                 print("(Brak treści w artykule)")
                 continue
 
+            article_title = data.get("title") or entry.title or "Brak tytułu"
             collected_data.append({
                 "source_id": source["id"],
                 "source_name": source["name"],
                 "bias": source["bias"],
-                "title": data.get("title", entry.title),
+                "title": article_title,
                 "url": entry.link,
-                "text_for_embedding": f"{data.get('title', entry.title)}. {text}"
+                "text_for_embedding": f"{article_title}. {text}"
             })
 
             if len(collected_data) >= num_of_data_to_collect:

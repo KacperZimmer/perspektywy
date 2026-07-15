@@ -1,48 +1,48 @@
 import textwrap
-from typing import Any
-
 import psycopg2
 from collections import defaultdict
 import numpy as np
+import pandas as pd
 import ollama
+from pgvector.psycopg2 import register_vector
+from pandas import DataFrame
 from sklearn.cluster import AgglomerativeClustering
 
 
-
-def fetch_articles_from_database() -> list[tuple[Any, ...]] | None:
-    # https://stackoverflow.com/questions/10598002/how-do-i-get-tables-in-postgres-using-psycopg2
+def fetch_articles_from_database() -> DataFrame | None:
     conn = None
 
     try:
-        conn = psycopg2.connect(host='localhost', user='newuser', password='password', database='kontekst_db')
+        conn = psycopg2.connect(
+            host='localhost',
+            user='newuser',
+            password='password',
+            database='kontekst_db'
+        )
+
+        register_vector(conn)
 
         cur = conn.cursor()
-
-        cur.execute('select * from embedded_articles limit 5;')
-
+        query = 'SELECT id, title, url, source, embedding FROM embedded_articles;'
+        cur.execute(query)
         result = cur.fetchall()
 
+        df = pd.DataFrame(result, columns=['id', 'title', 'url', 'source', 'embedding'])
 
-        return result
-
-
+        return df
 
     except psycopg2.OperationalError as e:
-        print(f"Bład operacyjny {e}")
+        print(f"Błąd operacyjny: {e}")
     except psycopg2.ProgrammingError as e:
-        print(f"bład programistyczny {e}")
+        print(f"Błąd programistyczny: {e}")
     except Exception as e:
-        print(f'Blad ogolny {e}')
+        print(f"Błąd ogólny: {e}")
     finally:
         if conn:
             conn.close()
 
 
-
-
-
 def prepare_texts_for_embedding(article_list: list) -> list:
-    """Przygotowuje tekst do embeddingu w sposób naturalny dla modelu bge-m3."""
     texts = []
     for article in article_list:
         title = article.get("title", "")
@@ -59,7 +59,6 @@ def prepare_texts_for_embedding(article_list: list) -> list:
 
 
 def generate_embeddings(texts: list, model_name: str = "bge-m3") -> np.ndarray:
-    """Generuje wektory (embeddings) za pomocą lokalnego API Ollama."""
     print(f"Generuję embeddingi przez Ollama (model: {model_name})...")
     embedded_texts = []
 
@@ -73,9 +72,8 @@ def generate_embeddings(texts: list, model_name: str = "bge-m3") -> np.ndarray:
 
 
 def cluster_news_agglomerative(
-    embeddings: np.ndarray, distance_threshold: float = 0.24
+        embeddings: np.ndarray, distance_threshold: float = 0.24
 ) -> np.ndarray:
-    """Klastruje wektory za pomocą AgglomerativeClustering ze średnim wiązaniem."""
     print(
         f"\nGrupowanie Agglomerative (linkage: average, próg: {distance_threshold})..."
     )
@@ -88,9 +86,7 @@ def cluster_news_agglomerative(
     return clusterer.fit_predict(embeddings)
 
 
-
 def map_labels_to_articles(article_list: list, labels: np.ndarray) -> dict:
-    """Mapuje artykuły do klastrów i stosuje Entity Guard do rozbicia sztucznych zbitek."""
     initial_clusters = defaultdict(list)
     for idx, label in enumerate(labels):
         initial_clusters[label].append(
@@ -115,9 +111,9 @@ def map_labels_to_articles(article_list: list, labels: np.ndarray) -> dict:
             placed = False
 
             for sub_cluster in sub_clusters:
-                    sub_cluster.append(article)
-                    placed = True
-                    break
+                sub_cluster.append(article)
+                placed = True
+                break
 
             if not placed:
                 sub_clusters.append([article])
@@ -133,7 +129,6 @@ def map_labels_to_articles(article_list: list, labels: np.ndarray) -> dict:
 
 
 def deduplicate_cluster_sources(clusters: dict) -> dict:
-    """Usuwa duplikaty źródeł wewnątrz jednego klastra i klasyfikuje Szum/Ślepe punkty."""
     processed_clusters = {}
     noise_articles = []
 
@@ -158,7 +153,6 @@ def deduplicate_cluster_sources(clusters: dict) -> dict:
 
 
 def print_clusters(clusters: dict):
-    """Wyświetla sformatowane klastry w czytelny sposób."""
     print("\n" + "=" * 50)
     print("WYNIKI KLASTERYZACJI (GROUND NEWS PL)")
     print("=" * 50)
@@ -190,25 +184,21 @@ def print_clusters(clusters: dict):
             for article in articles:
                 print(f"  - [{article['source']}] {article['title']}")
 
-result = fetch_articles_from_database()
 
-for element in result:
-    print(element[])
+if __name__ == "__main__":
+    result = fetch_articles_from_database()
 
-    # articles = load_and_deduplicate_articles(filepath)
-    # if len(articles) < 15:
-    #     print(
-    #         "Błąd: Za mało artykułów do przeprowadzenia klasteryzacji (minimum to 15)."
-    #     )
-    #     return
-    #
-    # texts_to_embed = prepare_texts_for_embedding(articles)
-    # embeddings = generate_embeddings(texts_to_embed)
-    #
-    # cluster_labels = cluster_news_agglomerative(embeddings, distance_threshold=0.30)
-    #
-    # raw_clusters = map_labels_to_articles(articles, cluster_labels)
-    #
-    # processed_clusters = deduplicate_cluster_sources(raw_clusters)
-    #
-    # print_clusters(processed_clusters)
+    if result is None or len(result) < 15:
+        print("Błąd: Za mało artykułów do przeprowadzenia klasteryzacji (minimum to 15).")
+    else:
+        embeddings = np.stack(result['embedding'].apply(lambda v: v.to_numpy()))
+
+        cluster_labels = cluster_news_agglomerative(embeddings, distance_threshold=0.20)
+
+        articles = result.rename(columns={'source': 'source_name'}).to_dict('records')
+
+        raw_clusters = map_labels_to_articles(articles, cluster_labels)
+
+        processed_clusters = deduplicate_cluster_sources(raw_clusters)
+
+        print_clusters(processed_clusters)
