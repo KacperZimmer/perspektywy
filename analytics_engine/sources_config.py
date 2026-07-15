@@ -46,6 +46,13 @@ SOURCES = [
         "type": "rss",
         "bias": "center"
     },
+    {
+        "id": "rzeczpospolita",
+        "name": "Rzeczpospolita",
+        "url": "https://www.rp.pl/rss_main",
+        "type": "rss",
+        "bias": "center"
+    },
 
     # ==========================================
     # --- TABLOIDY (Zazwyczaj Centrum) ---
@@ -76,9 +83,44 @@ SOURCES = [
         "bias": "center"
     },
     {
+        "id": "business_insider",
+        "name": "Business Insider Polska",
+        "url": "https://businessinsider.com.pl/.feed",
+        "type": "rss",
+        "bias": "center"
+    },
+    {
+        "id": "puls_biznesu",
+        "name": "Puls Biznesu",
+        "url": "https://www.pb.pl/rss/najnowsze.xml",
+        "type": "rss",
+        "bias": "center"
+    },
+    {
+        "id": "spiders_web",
+        "name": "Spider's Web",
+        "url": "https://spidersweb.pl/feed",
+        "type": "rss",
+        "bias": "center"
+    },
+    {
+        "id": "antyweb",
+        "name": "Antyweb",
+        "url": "https://antyweb.pl/feed",
+        "type": "rss",
+        "bias": "center"
+    },
+    {
         "id": "defence24",
         "name": "Defence24",
         "url": "https://defence24.pl/rss",
+        "type": "rss",
+        "bias": "center"
+    },
+    {
+        "id": "energetyka24",
+        "name": "Energetyka24",
+        "url": "https://energetyka24.com/rss",
         "type": "rss",
         "bias": "center"
     },
@@ -90,6 +132,13 @@ SOURCES = [
         "id": "dorzeczy",
         "name": "DoRzeczy.pl",
         "url": "https://dorzeczy.pl/feed/",
+        "type": "rss",
+        "bias": "right"
+    },
+    {
+        "id": "niezalezna",
+        "name": "Niezalezna.pl",
+        "url": "https://niezalezna.pl/feed",
         "type": "rss",
         "bias": "right"
     },
@@ -143,6 +192,13 @@ SOURCES = [
         "id": "tygodnik_powszechny",
         "name": "Tygodnik Powszechny",
         "url": "https://www.tygodnikpowszechny.pl/rss.xml",
+        "type": "rss",
+        "bias": "left"
+    },
+    {
+        "id": "przeglad",
+        "name": "Tygodnik Przegląd",
+        "url": "https://www.tygodnikprzeglad.pl/feed/",
         "type": "rss",
         "bias": "left"
     },

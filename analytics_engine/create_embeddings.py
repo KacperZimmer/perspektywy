@@ -193,7 +193,7 @@ if __name__ == "__main__":
     else:
         embeddings = np.stack(result['embedding'].apply(lambda v: v.to_numpy()))
 
-        cluster_labels = cluster_news_agglomerative(embeddings, distance_threshold=0.20)
+        cluster_labels = cluster_news_agglomerative(embeddings, distance_threshold=0.30)
 
         articles = result.rename(columns={'source': 'source_name'}).to_dict('records')
 
