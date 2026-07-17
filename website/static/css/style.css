@@ -1,0 +1,9 @@
+body {
+    background-color: #fdfdfc;
+    color: #111;
+}
+
+.border-y-double {
+    border-top: 4px double #111;
+    border-bottom: 1px solid #111;
+}
