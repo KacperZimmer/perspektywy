@@ -203,6 +203,7 @@ SOURCES = [
         "bias": "left"
     },
     {
+
         "id": "wiez",
         "name": "Więź",
         "url": "https://wiez.pl/feed/",
