@@ -5,7 +5,7 @@ import requests
 import trafilatura
 import json
 
-from psycopg2._psycopg import cursor
+
 from trafilatura import extract
 from data_scraper.test_sources import SOURCES, headers
 from analytics_engine.create_embeddings import (

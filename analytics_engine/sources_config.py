@@ -96,27 +96,8 @@ SOURCES = [
         "type": "rss",
         "bias": "center"
     },
-    {
-        "id": "spiders_web",
-        "name": "Spider's Web",
-        "url": "https://spidersweb.pl/feed",
-        "type": "rss",
-        "bias": "center"
-    },
-    {
-        "id": "antyweb",
-        "name": "Antyweb",
-        "url": "https://antyweb.pl/feed",
-        "type": "rss",
-        "bias": "center"
-    },
-    {
-        "id": "defence24",
-        "name": "Defence24",
-        "url": "https://defence24.pl/rss",
-        "type": "rss",
-        "bias": "center"
-    },
+
+
     {
         "id": "energetyka24",
         "name": "Energetyka24",
@@ -163,6 +144,13 @@ SOURCES = [
         "type": "rss",
         "bias": "right"
     },
+    {
+        "id": "magna_polonia",
+        "name": "Magna Polonia",
+        "url": "https://www.magnapolonia.org/feed/",
+        "type": "rss",
+        "bias": "right"
+    },
 
     # ==========================================
     # --- LEWICA / PROGRESYWNE ---
@@ -203,7 +191,6 @@ SOURCES = [
         "bias": "left"
     },
     {
-
         "id": "wiez",
         "name": "Więź",
         "url": "https://wiez.pl/feed/",
