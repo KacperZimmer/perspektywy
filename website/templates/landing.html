@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horyzont - Zrozumieć media</title>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Source Sans Pro"', 'sans-serif'],
+                    },
+                    colors: {
+                        bias: {
+                            left: '#ef4444',   /* Czerwony: Lewica */
+                            center: '#a8a29e', /* Szary: Centrum */
+                            right: '#3b82f6',  /* Niebieski: Prawica */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Link do Twojego zewnętrznego pliku CSS -->
+    <link rel="stylesheet" href="../static/css/style.css">
+
+    <style>
+        body {
+            background-color: #fdfdfc;
+            color: #111;
+        }
+        /* Delikatna tekstura kropkowana imitująca papier/siatkę */
+        .paper-bg {
+            background-image: radial-gradient(#e5e5e5 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col relative paper-bg">
+
+    <!-- Pasek ozdobny na samej górze wskazujący na cel platformy (Lewica, Centrum, Prawica) -->
+    <div class="flex h-2 w-full">
+        <div class="w-1/3 bg-bias-left"></div>
+        <div class="w-1/3 bg-bias-center"></div>
+        <div class="w-1/3 bg-bias-right"></div>
+    </div>
+
+    <!-- Główna zawartość wyśrodkowana na ekranie -->
+    <main class="flex-grow flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 text-center z-10 py-12">
+
+        <div class="max-w-4xl mx-auto">
+            <!-- Nagłówki platformy -->
+            <h1 class="font-serif text-6xl md:text-8xl font-black tracking-tight mb-4">HORYZONT</h1>
+
+            <h2 class="font-serif text-3xl md:text-4xl leading-tight mb-6">
+                Wyjdź ze swojej <span class="italic text-gray-500">bańki informacyjnej</span>.
+            </h2>
+
+            <p class="font-sans text-lg text-gray-700 max-w-2xl mx-auto mb-10 leading-relaxed">
+                Porównuj nagłówki z lewej, prawej strony i ze środka spektrum politycznego. Zobacz pełen obraz wydarzeń.
+            </p>
+
+            <!-- Strumień artykułów na żywo (Live Feed) -->
+         <!-- Strumień artykułów na żywo (Live Feed) -->
+            <div class="w-full max-w-2xl mx-auto mb-12 relative text-left">
+                <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 pl-2 border-l-2 border-gray-300">
+                    Na żywo: Strumień analiz
+                </div>
+
+                <!-- Zwiększyłem trochę wysokość (h-[380px]), żeby efekt zanikania miał więcej miejsca -->
+                <div id="live-feed-container" class="relative overflow-hidden flex flex-col gap-3 h-[380px] px-2 py-2">
+                    <!-- Tutaj JavaScript wrzuca nowe artykuły -->
+                </div>
+            </div>
+
+            <!-- Przyciski akcji (Call to Action) -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <!-- Główny przycisk: Rejestracja / Logowanie -->
+                <a href="#" class="bg-black text-white px-8 py-4 text-sm font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors w-full sm:w-auto shadow-lg">
+                    Załóż darmowe konto
+                </a>
+
+                <!-- Drugi przycisk: Przejście do serwisu bez logowania -->
+                <a href="index.html" class="border-2 border-black bg-white text-black px-8 py-4 text-sm font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors w-full sm:w-auto">
+                    Przenieś mnie na stronę
+                </a>
+            </div>
+
+            <!-- Link do logowania dla posiadających konto -->
+            <div class="mt-6 text-sm text-gray-500">
+                Masz już konto? <a href="#" class="text-black font-bold hover:underline">Zaloguj się</a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Stopka -->
+    <footer class="py-6 text-center text-xs font-sans text-gray-500 uppercase tracking-widest z-10">
+        &copy; 2024 Horyzont. Wszystkie prawa zastrzeżone.
+    </footer>
+
+    <!-- Link do zewnętrznego pliku JS z logiką animacji -->
+    <script src="../static/js/script.js"></script>
+</body>
+</html>
