@@ -2,16 +2,24 @@ import feedparser
 import numpy as np
 import psycopg2
 import requests
-import trafilatura
-import json
+import re
 
-
-from trafilatura import extract
-from data_scraper.test_sources import SOURCES, headers
+from data_scraper.test_sources import SOURCES
 from analytics_engine.create_embeddings import (
     prepare_texts_for_embedding,
     generate_embeddings,
 )
+
+POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://twojadomena.pl)'}
+
+
+def clean_html(raw_html: str) -> str:
+    """Usuwa tagi HTML z opisów w kanałach RSS, zostawiając czysty tekst."""
+    if not raw_html:
+        return ""
+    cleanr = re.compile('<.*?>')
+    cleantext = re.sub(cleanr, '', raw_html)
+    return " ".join(cleantext.split())
 
 
 def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> None:
@@ -28,7 +36,6 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
         source_name = article_list[idx]['source_name']
         title = article_list[idx]['title']
         url = article_list[idx]['url']
-
         single_embedding_for_article = embeddings_array_as_list[idx]
 
         data_to_insert.append(
@@ -48,18 +55,14 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
         print(f"✅ Próba zapisu {len(data_to_insert)} artykułów zakończona (nowe zapisane, duplikaty pominięte).")
 
     except psycopg2.OperationalError as e:
-        print(f"Błąd operacyjny {e}")
+        print(f"Błąd operacyjny: {e}")
     except psycopg2.ProgrammingError as e:
-        print(f"Błąd programistyczny {e}")
+        print(f"Błąd programistyczny: {e}")
     except Exception as e:
-        print(f'Blad ogolny {e}')
+        print(f'Błąd ogólny: {e}')
     finally:
         if conn:
             conn.close()
-
-
-
-
 
 
 def create_init_db():
@@ -82,9 +85,7 @@ def create_init_db():
         )
         cur = conn.cursor()
         cur.execute(create_table_command)
-        cur.close()
         conn.commit()
-
         print("✅ Tabela embedded_articles utworzona pomyślnie.")
     except Exception as e:
         print(f"❌ Nieoczekiwany błąd podczas tworzenia tabeli: {e}")
@@ -93,7 +94,7 @@ def create_init_db():
             conn.close()
 
 
-def agg_news_artictles(data_news_companies_map, num_of_data_to_collect : int):
+def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
     collected_data = []
 
     for source in data_news_companies_map:
@@ -101,7 +102,8 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect : int):
             continue
 
         try:
-            response = requests.get(source['url'], headers=headers, timeout=10)
+            # Pobieramy feed RSS przy pomocy własnych nagłówków
+            response = requests.get(source['url'], headers=POLITE_HEADERS, timeout=10)
             feed = feedparser.parse(response.content)
         except Exception as e:
             print(f"Błąd sieci dla {source['name']}: {e}")
@@ -110,33 +112,30 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect : int):
         print(f"\nPrzeszukuję: {source['name']}...")
 
         for entry in feed.entries:
+            article_title = entry.get("title", "Brak tytułu")
+            article_url = entry.get("link")
 
-            print(f"  -> Ekstrakcja: {entry.link}")
-            downloaded = trafilatura.fetch_url(entry.link)
-
-            if not downloaded:
-                print("     (Nie udało się pobrać HTML)")
+            if not article_url:
                 continue
 
-            metadata = extract(downloaded, output_format="json", with_metadata=True)
-            if not metadata:
-                print("     (Błąd ekstrakcji)")
-                continue
+            print(f"  -> Ekstrakcja nagłówka: {article_title}")
 
-            data = json.loads(metadata)
-            text = data.get('text')
-            if not text:
-                print("(Brak treści w artykule)")
-                continue
+            raw_summary = entry.get("summary", "")
+            clean_summary = clean_html(raw_summary)
 
-            article_title = data.get("title") or entry.title or "Brak tytułu"
+            if len(clean_summary) > 300:
+                clean_summary = clean_summary[:300] + "..."
+
+            # Podstawa dla wektorów: Tytuł + zajawka
+            text_for_embedding = f"{article_title}. {clean_summary}"
+
             collected_data.append({
-                "source_id": source["id"],
-                "source_name": source["name"],
-                "bias": source["bias"],
+                "source_id": source.get("id"),
+                "source_name": source.get("name"),
+                "bias": source.get("bias", "unknown"),
                 "title": article_title,
-                "url": entry.link,
-                "text_for_embedding": f"{article_title}. {text}"
+                "url": article_url,
+                "text_for_embedding": text_for_embedding
             })
 
             if len(collected_data) >= num_of_data_to_collect:
@@ -153,8 +152,6 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect : int):
         save_data_to_postgres(embeddings, collected_data)
 
 
-
+# Uruchomienie
 create_init_db()
 agg_news_artictles(SOURCES, 20)
-
-
