@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import feedparser
 import numpy as np
 import psycopg2
@@ -22,59 +24,145 @@ def clean_html(raw_html: str) -> str:
     return " ".join(cleantext.split())
 
 
-def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> None:
-    sql_to_insert_into_db = """
-    INSERT INTO embedded_articles (title, url, source, embedding) 
-    VALUES (%s, %s, %s, %s)
-    ON CONFLICT (url) DO NOTHING;
-    """
+def print_db_clusters() -> None:
+    conn = None
+    try:
+        conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
+        cur = conn.cursor()
 
-    data_to_insert = []
-    embeddings_array_as_list = embeddings_array.tolist()
+        query = """
+            SELECT c.id, a.source, a.title
+            FROM clusters c
+            JOIN embedded_articles a ON c.id = a.cluster_id
+            ORDER BY c.updated_at DESC;
+        """
+        cur.execute(query)
+        rows = cur.fetchall()
 
-    for idx in range(len(article_list)):
-        source_name = article_list[idx]['source_name']
-        title = article_list[idx]['title']
-        url = article_list[idx]['url']
-        single_embedding_for_article = embeddings_array_as_list[idx]
+        if not rows:
+            print("Brak danych w bazie. Uruchom najpierw scraper!")
+            return
 
-        data_to_insert.append(
-            (title, url, source_name, single_embedding_for_article)
+        clusters = defaultdict(list)
+        for cluster_id, source, title in rows:
+            clusters[cluster_id].append({'source': source, 'title': title})
+
+        print("\n" + "=" * 65)
+        print(" AKTUALNY STAN KLASTRÓW W BAZIE (GROUND NEWS PL)")
+        print("=" * 65)
+
+
+        sorted_clusters = sorted(
+            clusters.items(),
+            key=lambda item: (len(set(x['source'] for x in item[1])), len(item[1])),
+            reverse=True
         )
+
+        for cluster_id, articles in sorted_clusters:
+            unique_sources = set(article['source'] for article in articles)
+
+            if len(unique_sources) == 1:
+                if len(articles) == 1:
+                    print(f"\n⚫ POJEDYNCZY NEWS (ID Klastra: {cluster_id}):")
+                else:
+                    source_name = list(unique_sources)[0]
+                    print(f"\n🟡 ŚLEPY PUNKT / TEMAT LOKALNY (ID: {cluster_id}) - Zdominowany przez [{source_name}]:")
+            else:
+                print(
+                    f"\n🟢 GŁÓWNY TEMAT (ID Klastra: {cluster_id}) [{len(unique_sources)} różnych źródeł, łącznie {len(articles)} artykułów]:")
+
+            for article in articles:
+                print(f"  - [{article['source']}] {article['title']}")
+
+        print("\n" + "=" * 65)
+
+    except psycopg2.Error as e:
+        print(f"Błąd bazy danych podczas pobierania klastrów: {e}")
+    except Exception as e:
+        print(f"Błąd ogólny: {e}")
+    finally:
+        if conn:
+            conn.close()
+def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> None:
+    DISTANCE_THRESHOLD = 0.30
 
     conn = None
     try:
         conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
         cur = conn.cursor()
 
-        cur.executemany(
-            sql_to_insert_into_db,
-            data_to_insert
-        )
-        conn.commit()
-        print(f"✅ Próba zapisu {len(data_to_insert)} artykułów zakończona (nowe zapisane, duplikaty pominięte).")
+        embeddings_array_as_list = embeddings_array.tolist()
 
-    except psycopg2.OperationalError as e:
-        print(f"Błąd operacyjny: {e}")
-    except psycopg2.ProgrammingError as e:
-        print(f"Błąd programistyczny: {e}")
+        for idx, article in enumerate(article_list):
+            title = article['title']
+            url = article['url']
+            source_name = article['source_name']
+            embedding = embeddings_array_as_list[idx]
+
+            find_cluster_query = """
+                SELECT id, (centroid <=> %s::vector) AS distance
+                FROM clusters
+                ORDER BY distance ASC
+                LIMIT 1;
+            """
+            cur.execute(find_cluster_query, (embedding,))
+            nearest_cluster = cur.fetchone()
+
+            cluster_id = None
+
+            if nearest_cluster and nearest_cluster[1] <= DISTANCE_THRESHOLD:
+                cluster_id = nearest_cluster[0]
+                cur.execute("UPDATE clusters SET updated_at = current_timestamp WHERE id = %s", (cluster_id,))
+            else:
+                insert_cluster_query = """
+                    INSERT INTO clusters (centroid)
+                    VALUES (%s::vector)
+                    RETURNING id;
+                """
+                cur.execute(insert_cluster_query, (embedding,))
+                cluster_id = cur.fetchone()[0]
+
+            insert_article_query = """
+                INSERT INTO embedded_articles (cluster_id, title, url, source, embedding) 
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (url) DO NOTHING;
+            """
+            cur.execute(insert_article_query, (cluster_id, title, url, source_name, embedding))
+
+        conn.commit()
+        print(f"✅ Zapisano pomyślnie paczkę {len(article_list)} artykułów do bazy.")
+
+    except psycopg2.Error as e:
+        print(f"Błąd bazy danych: {e}")
     except Exception as e:
-        print(f'Błąd ogólny: {e}')
+        print(f"Błąd ogólny: {e}")
     finally:
         if conn:
             conn.close()
 
-
 def create_init_db():
-    create_table_command = """
+
+    create_table_articles_command = """
           CREATE TABLE IF NOT EXISTS embedded_articles(
               id bigserial primary key,
+              cluster_id bigint references clusters(id),
               title text,
               url text UNIQUE,
               source text,
-              embedding vector(1024)
+              embedding vector(1024),
+              created_at timestamp default current_timestamp
           );
       """
+
+    create_table_clusters_command = """
+        CREATE TABLE IF NOT EXISTS clusters(
+            id bigserial primary key, 
+            centroid vector(1024),
+            created_at timestamp default current_timestamp,
+            updated_at timestamp default current_timestamp
+        );    
+    """
+
     conn = None
     try:
         conn = psycopg2.connect(
@@ -84,7 +172,9 @@ def create_init_db():
             password='password'
         )
         cur = conn.cursor()
-        cur.execute(create_table_command)
+        cur.execute(create_table_clusters_command)
+
+        cur.execute(create_table_articles_command)
         conn.commit()
         print("✅ Tabela embedded_articles utworzona pomyślnie.")
     except Exception as e:
@@ -102,7 +192,6 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
             continue
 
         try:
-            # Pobieramy feed RSS przy pomocy własnych nagłówków
             response = requests.get(source['url'], headers=POLITE_HEADERS, timeout=10)
             feed = feedparser.parse(response.content)
         except Exception as e:
@@ -126,7 +215,6 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
             if len(clean_summary) > 300:
                 clean_summary = clean_summary[:300] + "..."
 
-            # Podstawa dla wektorów: Tytuł + zajawka
             text_for_embedding = f"{article_title}. {clean_summary}"
 
             collected_data.append({
@@ -152,6 +240,6 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
         save_data_to_postgres(embeddings, collected_data)
 
 
-# Uruchomienie
 create_init_db()
 agg_news_artictles(SOURCES, 20)
+print_db_clusters()
