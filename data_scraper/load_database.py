@@ -105,6 +105,7 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
                 ORDER BY distance ASC
                 LIMIT 1;
             """
+
             cur.execute(find_cluster_query, (embedding,))
             nearest_cluster = cur.fetchone()
 
