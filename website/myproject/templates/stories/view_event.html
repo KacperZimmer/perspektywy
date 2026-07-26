@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horyzont - Analiza Wydarzenia</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        bias: {
+                            left: '#ef4444',
+                            center: '#94a3b8',
+                            right: '#3b82f6',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans antialiased text-slate-900 bg-slate-50 min-h-screen flex flex-col">
+
+    <div class="flex h-1.5 w-full fixed top-0 z-50">
+        <div class="w-1/3 bg-bias-left"></div>
+        <div class="w-1/3 bg-bias-center"></div>
+        <div class="w-1/3 bg-bias-right"></div>
+    </div>
+
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-1.5 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'index' %}" class="text-2xl font-extrabold tracking-tight text-slate-900">HORYZONT</a>
+                <span class="hidden sm:block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Beta</span>
+            </div>
+            <a href="{% url 'index' %}" class="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Wróć do przeglądu
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+
+        <!-- Główna zawartość (lewa kolumna) -->
+        <div class="lg:col-span-8 flex flex-col gap-8">
+
+            <!-- Nagłówek wydarzenia -->
+            <div>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="bg-slate-200 text-slate-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Temat Dnia</span>
+                    <span class="text-sm font-medium text-slate-500">ID Klastra: {{ cluster.id }}</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight mb-4">
+                    <!-- Zastąp 'title' odpowiednim polem z modelu Clusters, jeśli je posiadasz -->
+                    {{ cluster.title|default:"Analiza Wydarzenia: Brak ustalonego tytułu w bazie" }}
+                </h1>
+            </div>
+
+            <!-- Box Podsumowania (Miejsce na analizę AI, jeśli posiadasz w bazie) -->
+            <section class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-5">
+                    <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.83L19.17 20H4.83L12 5.83zM11 16h2v2h-2v-2zm0-7h2v5h-2V9z"/></svg>
+                </div>
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Zsyntetyzowane podsumowanie
+                </h2>
+                <div class="prose prose-slate text-slate-700 leading-relaxed max-w-none text-lg">
+                    <!-- Zastąp polem z modelu, jeśli masz AI summary -->
+                    <p>{{ cluster.summary|default:"W tym miejscu system sztucznej inteligencji mógłby wyświetlać obiektywne podsumowanie wszystkich artykułów z tego klastra. Zbierałby w jedną spójną całość fakty, co do których zgadzają się wszystkie strony dyskursu publicznego." }}</p>
+                </div>
+            </section>
+
+            <!-- Lista artykułów powiązanych -->
+            <section class="mt-4">
+                <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    Przegląd mediów
+                    <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-sm font-semibold">{{ cluster.embeddedarticles_set.count }} źródła</span>
+                </h3>
+
+                <div class="flex flex-col gap-3">
+                    <!-- Iteracja po artykułach przypisanych do klastra -->
+                    {% for article in cluster.embeddedarticles_set.all %}
+                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="group bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex-grow">
+                            <span class="inline-block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{{ article.source }}</span>
+                            <h4 class="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                                {{ article.title }}
+                            </h4>
+                        </div>
+                        <div class="shrink-0 flex items-center text-sm font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">
+                            Przeczytaj
+                            <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </div>
+                    </a>
+                    {% empty %}
+                        <div class="p-8 text-center bg-white rounded-2xl border border-slate-100">
+                            <p class="text-slate-500">Brak przypisanych artykułów.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Panel boczny z analityką (prawa kolumna) -->
+        <aside class="lg:col-span-4 flex flex-col gap-6">
+
+            <!-- Box: Rozkład Narracji (Placeholder pod przyszłe dane) -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm sticky top-24">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-6 border-b border-slate-100 pb-4">Analityka Przekazu</h3>
+
+                <div class="mb-6">
+                    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 uppercase">
+                        <span>Zainteresowanie mediów</span>
+                    </div>
+                    <!-- Progres bary reprezentujące zaangażowanie poszczególnych stron (zahardkodowane na potrzeby UI, podmień pod dane z backendu) -->
+                    <div class="space-y-3 mt-4">
+                        <div class="flex items-center gap-3">
+                            <span class="w-16 text-xs font-bold text-red-500 uppercase">Lewica</span>
+                            <div class="flex-grow bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                <div class="bg-bias-left h-full rounded-full" style="width: 45%"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-16 text-xs font-bold text-slate-500 uppercase">Centrum</span>
+                            <div class="flex-grow bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                <div class="bg-bias-center h-full rounded-full" style="width: 70%"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-16 text-xs font-bold text-blue-500 uppercase">Prawica</span>
+                            <div class="flex-grow bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                <div class="bg-bias-right h-full rounded-full" style="width: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Box: Martwe Pole (Tylko w widoku szczegółowym) -->
+                <div class="mt-8 bg-slate-900 text-white p-5 rounded-2xl relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 w-20 h-20 bg-slate-800 rounded-full opacity-50"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300">Wykryto Martwe Pole</h4>
+                        </div>
+                        <p class="text-sm text-slate-300 leading-relaxed mb-0">
+                            Zauważyliśmy, że ten temat jest niemal całkowicie ignorowany przez media prawicowe, podczas gdy centrum i lewica publikują na jego temat intensywnie.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+            <p class="text-sm font-medium text-slate-500">&copy; 2024 Horyzont. Pełen obraz informacji.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

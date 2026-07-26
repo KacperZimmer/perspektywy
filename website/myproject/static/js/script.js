@@ -1,20 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const dateOptions = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    };
-
-    const dateElement = document.getElementById('current-date');
-    if (dateElement) {
-        dateElement.innerText = new Date().toLocaleDateString('pl-PL', dateOptions);
-    }
-});
-document.addEventListener('DOMContentLoaded', () => {
 
     // ==========================================
-    // 1. LOGIKA DLA STRONY GŁÓWNEJ (index.html)
+    // 1. DATA - STRONA GŁÓWNA
     // ==========================================
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const dateElement = document.getElementById('current-date');
@@ -23,9 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 2. LOGIKA DLA STRONY POWITALNEJ (landing.html) - FADING FEED
+    // 2. FADING FEED - STRONA POWITALNA
     // ==========================================
-
     const mockArticles = [
         { title: "Debata o wolności słowa w internecie. Nowe przepisy budzą obawy.", left: 20, center: 30, right: 50 },
         { title: "Protesty rolników blokują drogi. Rząd zapowiada interwencję.", left: 15, center: 15, right: 70 },
@@ -41,29 +27,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (feedContainer) {
         let articleIndex = 0;
 
-        // Ta funkcja aktualizuje wygląd wszystkich kart za każdym razem, gdy dodajemy nową
         function updateCardsState() {
             const cards = Array.from(feedContainer.children);
 
             cards.forEach((card, index) => {
-                // Podstawowe klasy wspólne dla wszystkich kart
-                let baseClasses = 'bg-white border border-gray-200 p-4 shadow-sm text-left transition-all duration-1000 ease-in-out shrink-0 w-full rounded-sm transform origin-top';
+                // Nowe bazowe klasy: zaokrąglenia, tło, cień, border
+                let baseClasses = 'bg-white border border-slate-100 p-5 shadow-sm text-left transition-all duration-1000 ease-in-out shrink-0 w-full rounded-2xl transform origin-top absolute top-0 left-0 right-0';
 
-                // W zależności od pozycji na liście (index), zmieniamy przezroczystość i skalę
                 if (index === 0) {
-                    // Najnowszy (na samej górze) - 100% widoczny, pełny rozmiar
                     card.className = `${baseClasses} translate-y-0 opacity-100 scale-100 z-50`;
                 } else if (index === 1) {
-                    // Drugi - lekko przezroczysty, minimalnie mniejszy
-                    card.className = `${baseClasses} translate-y-0 opacity-70 scale-95 z-40`;
+                    card.className = `${baseClasses} translate-y-20 opacity-70 scale-[0.97] z-40`;
                 } else if (index === 2) {
-                    // Trzeci - mocniej przezroczysty, jeszcze mniejszy
-                    card.className = `${baseClasses} translate-y-0 opacity-40 scale-90 z-30`;
+                    card.className = `${baseClasses} translate-y-36 opacity-40 scale-[0.93] z-30`;
                 } else if (index === 3) {
-                    // Czwarty - ledwo widoczny
-                    card.className = `${baseClasses} translate-y-0 opacity-10 scale-75 z-20`;
+                    card.className = `${baseClasses} translate-y-48 opacity-10 scale-[0.89] z-20`;
                 } else {
-                    card.className = `${baseClasses} translate-y-4 opacity-0 scale-50 z-10`;
+                    card.className = `${baseClasses} translate-y-56 opacity-0 scale-75 z-10`;
                     setTimeout(() => card.remove(), 1000);
                 }
             });
@@ -73,31 +53,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const articleData = mockArticles[articleIndex];
             const newCard = document.createElement('div');
 
-            // Stan początkowy dla nowej karty: przesunięta w górę i ukryta
-            newCard.className = 'bg-white border border-gray-200 p-4 shadow-sm text-left transition-all duration-1000 ease-in-out shrink-0 w-full rounded-sm transform origin-top -translate-y-12 opacity-0 scale-100';
+            newCard.className = 'bg-white border border-slate-100 p-5 shadow-sm text-left transition-all duration-1000 ease-in-out shrink-0 w-full rounded-2xl transform origin-top -translate-y-10 opacity-0 scale-100 absolute top-0 left-0 right-0';
 
+            // Nowy szablon karty dla feedu - usunięto szeryfy, zaokrąglono paski
             newCard.innerHTML = `
-                <h3 class="font-serif text-lg font-bold leading-tight mb-3 text-gray-900">${articleData.title}</h3>
-                <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
-                    <div class="bg-bias-left h-1.5 transition-all duration-1000 ease-out" style="width: 0%"></div>
-                    <div class="bg-bias-center h-1.5 transition-all duration-1000 ease-out" style="width: 0%"></div>
-                    <div class="bg-bias-right h-1.5 transition-all duration-1000 ease-out" style="width: 0%"></div>
+                <h3 class="font-sans text-lg font-bold leading-tight mb-4 text-slate-900">${articleData.title}</h3>
+                <div class="w-full bg-slate-100 rounded-full h-2 flex overflow-hidden gap-1">
+                    <div class="bg-bias-left h-2 rounded-l-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    <div class="bg-bias-center h-2 transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    <div class="bg-bias-right h-2 rounded-r-full transition-all duration-1000 ease-out" style="width: 0%"></div>
                 </div>
-                <div class="flex justify-between text-[9px] font-bold uppercase text-gray-400 mt-2">
-                    <span>Lewica: ${articleData.left}%</span>
-                    <span>Centrum: ${articleData.center}%</span>
-                    <span>Prawica: ${articleData.right}%</span>
+                <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400 mt-3">
+                    <span class="text-red-500/80">Lewica ${articleData.left}%</span>
+                    <span class="text-slate-500/80">Centrum ${articleData.center}%</span>
+                    <span class="text-blue-500/80">Prawica ${articleData.right}%</span>
                 </div>
             `;
 
             feedContainer.prepend(newCard);
-
-            void newCard.offsetWidth;
-
+            void newCard.offsetWidth; // Trigger reflow
             updateCardsState();
 
+            // Animacja pasków błędu
             setTimeout(() => {
-                const bars = newCard.querySelectorAll('.h-1\\.5 > div');
+                const bars = newCard.querySelectorAll('.h-2 > div');
                 if(bars.length === 3) {
                     bars[0].style.width = `${articleData.left}%`;
                     bars[1].style.width = `${articleData.center}%`;
@@ -109,10 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         pushNewArticle();
-
         setTimeout(pushNewArticle, 500);
         setTimeout(pushNewArticle, 1000);
 
-        setInterval(pushNewArticle, 3500);
+        setInterval(pushNewArticle, 4000);
     }
 });

@@ -1,9 +1,19 @@
 body {
-    background-color: #fdfdfc;
-    color: #111;
+    background-color: #f8fafc; /* Bardzo jasny, chłodny szary (Slate 50) */
+    color: #0f172a; /* Ciemny, elegancki granat/szary (Slate 900) */
 }
 
-.border-y-double {
-    border-top: 4px double #111;
-    border-bottom: 1px solid #111;
+/* Subtelny pasek przewijania dla nowoczesnego wyglądu (opcjonalnie) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
