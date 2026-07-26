@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Horyzont - Przegląd Prasy</title>
 
-    <!-- Tailwind CSS (CDN for quick setup without Node.js) -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts for NYT/WaPo look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -23,9 +20,9 @@
                     },
                     colors: {
                         bias: {
-                            left: '#ef4444',   /* Czerwony: Lewica */
-                            center: '#a8a29e', /* Szary: Centrum */
-                            right: '#3b82f6',  /* Niebieski: Prawica */
+                            left: '#ef4444',
+                            center: '#a8a29e',
+                            right: '#3b82f6',
                         }
                     }
                 }
@@ -39,7 +36,6 @@
 </head>
 <body class="font-sans antialiased max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <!-- Nagłówek (Header) -->
     <header class="py-6">
         <div class="flex justify-between items-end mb-4">
             <div class="text-sm text-gray-600 font-serif">Warszawa, Polska<br><span id="current-date"></span></div>
@@ -49,87 +45,92 @@
             <h1 class="font-serif text-6xl md:text-8xl font-black tracking-tight">HORYZONT</h1>
             <p class="font-sans text-lg mt-2 text-gray-700 italic">Zrozumieć media. Wiadomości z każdej perspektywy.</p>
         </div>
-        <nav class="border-b border-black py-3">
-            <ul class="flex justify-center space-x-6 text-sm font-bold uppercase tracking-wider">
-                <li><a href="#" class="hover:text-gray-500 transition-colors">Polska</a></li>
-                <li><a href="#" class="hover:text-gray-500 transition-colors">Świat</a></li>
-                <li><a href="#" class="hover:text-gray-500 transition-colors">Polityka</a></li>
-                <li><a href="#" class="hover:text-gray-500 transition-colors">Gospodarka</a></li>
-                <li><a href="#" class="hover:text-gray-500 transition-colors">Technologia</a></li>
-            </ul>
-        </nav>
     </header>
 
-    <!-- Główna Zawartość -->
     <main class="grid grid-cols-1 md:grid-cols-12 gap-8 my-8">
 
-        <!-- Lewa strona (Główne Wiadomości) -->
+        <!-- Lewa strona (Dynamiczne Klastry z bazy danych) -->
         <div class="md:col-span-8">
-            <!-- Główny Artykuł -->
-            <article class="border-b border-gray-300 pb-8 mb-8">
-                <h2 class="font-serif text-4xl md:text-5xl font-bold leading-tight mb-4 hover:underline cursor-pointer">Nowa ustawa budzi kontrowersje w Sejmie. Eksperci i media głęboko podzieleni.</h2>
 
-                <!-- Wskaźniki pokrycia medialnego (Ground News Style) -->
-                <div class="flex items-center space-x-4 mb-4 text-xs font-bold uppercase">
-                    <span class="bg-bias-left text-white px-2 py-1 rounded">Lewica: 45%</span>
-                    <span class="bg-bias-center text-white px-2 py-1 rounded">Centrum: 20%</span>
-                    <span class="bg-bias-right text-white px-2 py-1 rounded">Prawica: 35%</span>
-                    <span class="text-gray-500 border-l border-gray-400 pl-4">Na podstawie 12 źródeł</span>
-                </div>
+            {% for cluster in page_obj %}
+                <article class="border-b border-gray-300 pb-8 mb-8">
 
-                <img src="https://images.unsplash.com/photo-1526040652367-ac003a0475b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80" alt="Budynek parlamentu" class="w-full h-auto object-cover mb-4 grayscale hover:grayscale-0 transition duration-500">
-                <p class="text-lg text-gray-800 leading-relaxed font-serif">
-                    Projekt nowej ustawy wywołał burzliwą debatę. Media o profilu lewicowym skupiają się na aspektach socjalnych, z kolei prawicowe portale biją na alarm w związku z obciążeniami dla przedsiębiorców. Zobacz, jak relacjonują to różne strony sporu politycznego.
-                </p>
-            </article>
+                    <!-- Główny tytuł klastra (bierzemy tytuł pierwszego artykułu z klastra) -->
+                    <a href="{{ cluster.0.url }}" target="_blank" class="block group">
+                        <h2 class="font-serif text-3xl md:text-4xl font-bold leading-tight mb-4 group-hover:underline cursor-pointer">
+                            {{ cluster.0.title }}
+                        </h2>
+                    </a>
 
-            <!-- Mniejsze artykuły -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <article>
-                    <h3 class="font-serif text-2xl font-bold leading-tight mb-2 hover:underline cursor-pointer">Szczyt klimatyczny zakończony. Prawica milczy.</h3>
-                    <div class="flex items-center space-x-2 mb-2 text-[10px] font-bold uppercase">
-                        <span class="bg-bias-left text-white px-1.5 py-0.5 rounded" title="Lewica">L: 75%</span>
-                        <span class="bg-bias-center text-white px-1.5 py-0.5 rounded" title="Centrum">C: 20%</span>
-                        <span class="bg-bias-right text-white px-1.5 py-0.5 rounded" title="Prawica">P: 5%</span>
+                    <!-- Wskaźniki pokrycia medialnego (Tagi ze źródłami) -->
+                    <div class="flex flex-wrap items-center gap-2 mb-4 text-[10px] font-bold uppercase tracking-wider">
+                        <span class="text-gray-500 border-r border-gray-400 pr-3 py-1">Źródła ({{ cluster|length }}):</span>
+                        {% for article in cluster %}
+                            <span class="bg-gray-100 text-gray-800 border border-gray-300 px-2 py-1 rounded">
+                                {{ article.source }}
+                            </span>
+                        {% endfor %}
                     </div>
-                    <p class="text-gray-700 text-sm font-serif">Większość raportujących źródeł znajduje się po lewej stronie spektrum. Znaczny brak pokrycia ze strony konserwatywnej.</p>
-                </article>
-                <article>
-                    <h3 class="font-serif text-2xl font-bold leading-tight mb-2 hover:underline cursor-pointer">Reforma edukacji okiem lokalnych samorządów</h3>
-                    <div class="flex items-center space-x-2 mb-2 text-[10px] font-bold uppercase">
-                        <span class="bg-bias-left text-white px-1.5 py-0.5 rounded">L: 33%</span>
-                        <span class="bg-bias-center text-white px-1.5 py-0.5 rounded">C: 33%</span>
-                        <span class="bg-bias-right text-white px-1.5 py-0.5 rounded">P: 34%</span>
+
+                    <!-- Pozostałe artykuły z tego klastra (Inne perspektywy) -->
+                    <div class="mt-4 pl-4 border-l-2 border-black">
+                        <h4 class="font-sans text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Inne relacje na ten temat:</h4>
+                        <ul class="space-y-2">
+                            {% for article in cluster|slice:"1:" %}
+                                <li class="font-serif text-sm">
+                                    <span class="font-bold text-gray-900 mr-1">{{ article.source }}:</span>
+                                    <a href="{{ article.url }}" target="_blank" class="text-gray-700 hover:text-black hover:underline">
+                                        {{ article.title }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
                     </div>
-                    <p class="text-gray-700 text-sm font-serif">Zrównoważone spojrzenie na problem. Wszystkie strony polityczne komentują zapowiedzi ministerstwa.</p>
                 </article>
+            {% empty %}
+                <p class="font-serif text-xl text-gray-500 italic text-center py-10">Obecnie brak dużych wydarzeń w mediach.</p>
+            {% endfor %}
+
+            <!-- ================= PAGINACJA ================= -->
+            <div class="flex justify-between items-center mt-12 mb-8 font-sans border-t border-black pt-6">
+
+                <!-- Przycisk Poprzednia -->
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-5 py-2 border-2 border-black text-black font-bold uppercase tracking-wider text-xs hover:bg-black hover:text-white transition duration-300">
+                        &larr; Poprzednia
+                    </a>
+                {% else %}
+                    <span class="px-5 py-2 border-2 border-gray-300 text-gray-400 font-bold uppercase tracking-wider text-xs cursor-not-allowed">
+                        &larr; Poprzednia
+                    </span>
+                {% endif %}
+
+                <!-- Numer Strony -->
+                <span class="font-bold text-sm tracking-widest uppercase">
+                    Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}
+                </span>
+
+                <!-- Przycisk Następna -->
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-5 py-2 border-2 border-black text-black font-bold uppercase tracking-wider text-xs hover:bg-black hover:text-white transition duration-300">
+                        Następna &rarr;
+                    </a>
+                {% else %}
+                    <span class="px-5 py-2 border-2 border-gray-300 text-gray-400 font-bold uppercase tracking-wider text-xs cursor-not-allowed">
+                        Następna &rarr;
+                    </span>
+                {% endif %}
+
             </div>
         </div>
 
-        <!-- Prawa strona (Sidebar z analizą) -->
+        <!-- Prawa strona (Sidebar z analizą - zostawiamy oryginalny układ wizualny) -->
         <aside class="md:col-span-4 border-l border-gray-300 pl-8">
-            <h3 class="font-sans font-black text-xs uppercase tracking-widest border-b-2 border-black pb-2 mb-6">Na Czasie - Analiza Stronniczości</h3>
+            <h3 class="font-sans font-black text-xs uppercase tracking-widest border-b-2 border-black pb-2 mb-6">Na Czasie - Statystyki</h3>
 
-            <div class="space-y-6">
-                <article>
-                    <h4 class="font-serif text-xl font-bold leading-snug hover:underline cursor-pointer">Protesty rolników na granicy</h4>
-                    <!-- Pasek biasu -->
-                    <div class="mt-2 w-full bg-gray-200 rounded-full h-2 flex">
-                        <div class="bg-bias-left h-2 rounded-l-full" style="width: 15%"></div>
-                        <div class="bg-bias-center h-2" style="width: 25%"></div>
-                        <div class="bg-bias-right h-2 rounded-r-full" style="width: 60%"></div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">Przewaga mediów prawicowych (18 źródeł)</p>
-                </article>
-            </div>
-
-            <!-- Sekcja Blindspot (Martwe Pole) -->
             <div class="mt-10 bg-black text-white p-6 rounded-sm">
-                <h3 class="font-sans font-bold text-lg mb-1 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
-                    Martwe Pole
-                </h3>
-                <p class="text-xs mb-4 text-gray-400">Ta historia jest ignorowana przez główne media z centrum.</p>
+                <h3 class="font-sans font-bold text-lg mb-1 flex items-center">Martwe Pole</h3>
+                <p class="text-xs mb-4 text-gray-400">Ta historia jest ignorowana przez większość źródeł.</p>
                 <h4 class="font-serif text-lg font-bold hover:underline cursor-pointer">Kontrowersyjne dotacje dla organizacji pozarządowych</h4>
                 <button class="mt-4 bg-white text-black text-xs font-bold uppercase px-4 py-2 w-full hover:bg-gray-200 transition">Sprawdź analizę</button>
             </div>
@@ -137,11 +138,10 @@
     </main>
 
     <footer class="border-t-4 border-black mt-16 py-8 text-center text-sm font-sans text-gray-600">
-        <p>&copy; 2024 Horyzont. Projekt Frontendu inspirowany Ground News, NYT i Washington Post.</p>
+        <p>&copy; 2024 Horyzont. Projekt Frontendu.</p>
     </footer>
 
     <script>
-        // Dynamiczne wstrzyknięcie dzisiejszej daty do nagłówka
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('pl-PL', dateOptions);
     </script>
