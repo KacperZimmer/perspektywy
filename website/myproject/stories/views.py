@@ -14,9 +14,11 @@ def view_event(request, id):
 
 def index(request):
     clusters_to_show = []
-    clusters = EmbeddedArticles.objects.values('cluster_id').annotate(
+    clusters = EmbeddedArticles.objects.defer('centroid').values('cluster_id').annotate(
         articles_per_cluster=Count('id')
     )
+
+
 
     for cluster in clusters:
         num_of_occurences = cluster['articles_per_cluster']
@@ -26,12 +28,19 @@ def index(request):
                 cluster_id=single_id_cluster)
 
             cluster_articles = []
+
+            source_set = set()
+
             for article in articles_with_given_cluster_id:
-                cluster_articles.append({
-                    "source": article.source,
-                    "url": article.url,
-                    "title": article.title,
-                })
+
+                if article.source not in source_set:
+                    cluster_articles.append({
+                        "source": article.source,
+                        "url": article.url,
+                        "title": article.title,
+                    })
+
+                source_set.add(article.source)
 
             clusters_to_show.append({
                 "cluster_id": single_id_cluster,
