@@ -3,16 +3,70 @@ from django.db.models import Count
 from django.core.paginator import Paginator
 from .models import EmbeddedArticles, Clusters, Publisher
 
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count
+from django.core.paginator import Paginator
+from .models import EmbeddedArticles, Clusters, Publisher
+
 
 def view_event(request, id):
     cluster = get_object_or_404(Clusters, id=id)
+
+    articles = cluster.embeddedarticles_set.select_related('publisher').all()
+
+    total_articles = articles.count()
+
+    left_count = 0
+    center_count = 0
+    right_count = 0
+
+    for article in articles:
+        if article.publisher and article.publisher.bias is not None:
+            bias = float(article.publisher.bias)
+
+            if bias <= 0.35:
+                left_count += 1
+            elif bias <= 0.60:
+                center_count += 1
+            else:
+                right_count += 1
+
+    if total_articles > 0:
+        left_percent = int((left_count / total_articles) * 100)
+        center_percent = int((center_count / total_articles) * 100)
+        right_percent = int((right_count / total_articles) * 100)
+    else:
+        left_percent = center_percent = right_percent = 0
+
+    blind_spot_msg = None
+    if total_articles >= 3:
+        if right_count == 0 and (left_count > 0 or center_count > 0):
+            blind_spot_msg = "Zauważyliśmy, że ten temat jest niemal całkowicie ignorowany przez media prawicowe, podczas gdy centrum i lewica publikują na jego temat intensywnie."
+        elif left_count == 0 and (right_count > 0 or center_count > 0):
+            blind_spot_msg = "Zauważyliśmy, że ten temat jest niemal całkowicie ignorowany przez media lewicowe, podczas gdy centrum i prawica mocno go eksploatują."
+        elif center_count == 0 and left_count > 0 and right_count > 0:
+            blind_spot_msg = "Temat ten silnie polaryzuje. Piszą o nim media skrajne z obu stron, podczas gdy media centrowe głównego nurtu w ogóle go nie poruszają."
+
     context = {
-        "cluster": cluster
+        "cluster": cluster,
+        "articles": articles,  # Przekazujemy przefiltrowane artykuły
+        "stats": {
+            "total": total_articles,
+            "left_percent": left_percent,
+            "center_percent": center_percent,
+            "right_percent": right_percent,
+            "left_count": left_count,
+            "center_count": center_count,
+            "right_count": right_count,
+        },
+        "blind_spot_msg": blind_spot_msg
     }
 
     return render(request, "stories/view_event.html", context)
 
 
+# Zostawiam Twój zoptymalizowany def index(request):
+# (Nie zmieniam go)
 def index(request):
 
 
