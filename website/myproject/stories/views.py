@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count
 from django.core.paginator import Paginator
-from .models import EmbeddedArticles, Clusters
+from .models import EmbeddedArticles, Clusters, Publisher
 
 
 def view_event(request, id):
@@ -9,10 +9,13 @@ def view_event(request, id):
     context = {
         "cluster": cluster
     }
+
     return render(request, "stories/view_event.html", context)
 
 
 def index(request):
+
+
     clusters_to_show = []
     clusters = EmbeddedArticles.objects.defer('centroid').values('cluster_id').annotate(
         articles_per_cluster=Count('id')
@@ -54,5 +57,7 @@ def index(request):
     context = {
         'page_obj': page_obj,
     }
+
+
 
     return render(request, 'stories/index.html', context)
