@@ -16,6 +16,7 @@ def view_event(request, id):
 
     total_articles = articles.count()
 
+
     left_count = 0
     center_count = 0
     right_count = 0
@@ -65,8 +66,6 @@ def view_event(request, id):
     return render(request, "stories/view_event.html", context)
 
 
-# Zostawiam Twój zoptymalizowany def index(request):
-# (Nie zmieniam go)
 def index(request):
 
 
@@ -96,6 +95,7 @@ def index(request):
                         "url": article.url,
                         "title": article.title,
                     })
+
 
                 source_set.add(article.source)
 
