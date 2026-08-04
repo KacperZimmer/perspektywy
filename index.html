@@ -3,83 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horyzont - Przegląd Prasy</title>
+    <title>Horyzont - Zrozumieć media</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/style.css">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        serif: ['"Playfair Display"', 'serif'],
-                        sans: ['"Source Sans Pro"', 'sans-serif'],
+                        sans: ['"Inter"', 'sans-serif'],
                     },
                     colors: {
                         bias: {
                             left: '#ef4444',
-                            center: '#a8a29e',
+                            center: '#94a3b8', /* Bardziej neutralny szary */
                             right: '#3b82f6',
-                        }
+                        },
+                        surface: '#ffffff',
                     }
                 }
             }
         }
     </script>
-    <style>
-        body { background-color: #fdfdfc; color: #111; }
-        .border-y-double { border-top: 4px double #111; border-bottom: 1px solid #111; }
-    </style>
 </head>
-<body class="font-sans antialiased max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<body class="font-sans antialiased text-slate-900 bg-slate-50 min-h-screen flex flex-col">
 
-    <header class="py-6">
-        <div class="flex justify-between items-end mb-4">
-            <div class="text-sm text-gray-600 font-serif">Warszawa, Polska<br><span id="current-date"></span></div>
-            <div class="text-sm font-semibold uppercase tracking-widest text-gray-800">Wydanie Cyfrowe</div>
-        </div>
-        <div class="border-y-double py-6 text-center">
-            <h1 class="font-serif text-6xl md:text-8xl font-black tracking-tight">HORYZONT</h1>
-            <p class="font-sans text-lg mt-2 text-gray-700 italic">Zrozumieć media. Wiadomości z każdej perspektywy.</p>
+    <!-- Pasek nastawień u góry -->
+    <div class="flex h-1.5 w-full fixed top-0 z-50">
+        <div class="w-1/3 bg-bias-left"></div>
+        <div class="w-1/3 bg-bias-center"></div>
+        <div class="w-1/3 bg-bias-right"></div>
+    </div>
+
+    <!-- Nowoczesna nawigacja -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-1.5 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="#" class="text-2xl font-extrabold tracking-tight text-slate-900">HORYZONT</a>
+                <span class="hidden sm:block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Beta</span>
+            </div>
+            <div class="text-sm font-medium text-slate-500" id="current-date"></div>
         </div>
     </header>
 
-    <main class="grid grid-cols-1 md:grid-cols-12 gap-8 my-8">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
 
-        <!-- Lewa strona (Dynamiczne Klastry z bazy danych) -->
-        <div class="md:col-span-8">
+        <!-- Główna kolumna z newsami -->
+        <div class="md:col-span-8 flex flex-col gap-6">
+
+            <div class="mb-4">
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Przegląd Prasy</h1>
+                <p class="text-slate-500 mt-2">Kluczowe wydarzenia z różnych stron dyskursu publicznego.</p>
+            </div>
 
             {% for cluster in page_obj %}
-                <article class="border-b border-gray-300 pb-8 mb-8">
+                <!-- Karta artykułu -->
+                <article class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
 
-                    <!-- Główny tytuł klastra (bierzemy tytuł pierwszego artykułu z klastra) -->
-                    <a href="{{ cluster.0.url }}" target="_blank" class="block group">
-                        <h2 class="font-serif text-3xl md:text-4xl font-bold leading-tight mb-4 group-hover:underline cursor-pointer">
+                    <a href="{{ cluster.0.url }}" target="_blank" class="block group mb-5">
+                        <h2 class="text-2xl sm:text-3xl font-bold leading-tight text-slate-900 group-hover:text-blue-600 transition-colors">
                             {{ cluster.0.title }}
                         </h2>
                     </a>
 
-                    <!-- Wskaźniki pokrycia medialnego (Tagi ze źródłami) -->
-                    <div class="flex flex-wrap items-center gap-2 mb-4 text-[10px] font-bold uppercase tracking-wider">
-                        <span class="text-gray-500 border-r border-gray-400 pr-3 py-1">Źródła ({{ cluster|length }}):</span>
+                    <!-- Tagi / Źródła -->
+                    <div class="flex flex-wrap items-center gap-2 mb-6">
+                        <span class="text-xs font-semibold uppercase text-slate-400 mr-2">Analizowane źródła:</span>
                         {% for article in cluster %}
-                            <span class="bg-gray-100 text-gray-800 border border-gray-300 px-2 py-1 rounded">
+                            <span class="bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 rounded-full text-xs font-medium">
                                 {{ article.source }}
                             </span>
                         {% endfor %}
                     </div>
 
-                    <!-- Pozostałe artykuły z tego klastra (Inne perspektywy) -->
-                    <div class="mt-4 pl-4 border-l-2 border-black">
-                        <h4 class="font-sans text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Inne relacje na ten temat:</h4>
-                        <ul class="space-y-2">
+                    <!-- Inne perspektywy -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            Porównaj perspektywy
+                        </h4>
+                        <ul class="flex flex-col gap-3">
                             {% for article in cluster|slice:"1:" %}
-                                <li class="font-serif text-sm">
-                                    <span class="font-bold text-gray-900 mr-1">{{ article.source }}:</span>
-                                    <a href="{{ article.url }}" target="_blank" class="text-gray-700 hover:text-black hover:underline">
+                                <li class="text-sm group flex items-start sm:items-center gap-2">
+                                    <span class="font-semibold text-slate-900 shrink-0">{{ article.source }}:</span>
+                                    <a href="{{ article.url }}" target="_blank" class="text-slate-600 group-hover:text-blue-600 transition-colors line-clamp-1">
                                         {{ article.title }}
                                     </a>
                                 </li>
@@ -88,35 +100,34 @@
                     </div>
                 </article>
             {% empty %}
-                <p class="font-serif text-xl text-gray-500 italic text-center py-10">Obecnie brak dużych wydarzeń w mediach.</p>
+                <div class="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm">
+                    <p class="text-lg text-slate-500 font-medium">Obecnie brak dużych wydarzeń o zasięgu ogólnopolskim.</p>
+                </div>
             {% endfor %}
 
             <!-- ================= PAGINACJA ================= -->
-            <div class="flex justify-between items-center mt-12 mb-8 font-sans border-t border-black pt-6">
+            <div class="flex justify-between items-center mt-8 bg-white p-2 rounded-xl shadow-sm border border-slate-100">
 
-                <!-- Przycisk Poprzednia -->
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="px-5 py-2 border-2 border-black text-black font-bold uppercase tracking-wider text-xs hover:bg-black hover:text-white transition duration-300">
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-100 transition-colors">
                         &larr; Poprzednia
                     </a>
                 {% else %}
-                    <span class="px-5 py-2 border-2 border-gray-300 text-gray-400 font-bold uppercase tracking-wider text-xs cursor-not-allowed">
+                    <span class="px-4 py-2 bg-transparent text-slate-300 rounded-lg text-sm font-semibold cursor-not-allowed">
                         &larr; Poprzednia
                     </span>
                 {% endif %}
 
-                <!-- Numer Strony -->
-                <span class="font-bold text-sm tracking-widest uppercase">
-                    Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}
+                <span class="text-sm font-medium text-slate-500">
+                    Strona <span class="text-slate-900 font-bold">{{ page_obj.number }}</span> z {{ page_obj.paginator.num_pages }}
                 </span>
 
-                <!-- Przycisk Następna -->
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="px-5 py-2 border-2 border-black text-black font-bold uppercase tracking-wider text-xs hover:bg-black hover:text-white transition duration-300">
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-100 transition-colors">
                         Następna &rarr;
                     </a>
                 {% else %}
-                    <span class="px-5 py-2 border-2 border-gray-300 text-gray-400 font-bold uppercase tracking-wider text-xs cursor-not-allowed">
+                    <span class="px-4 py-2 bg-transparent text-slate-300 rounded-lg text-sm font-semibold cursor-not-allowed">
                         Następna &rarr;
                     </span>
                 {% endif %}
@@ -124,26 +135,46 @@
             </div>
         </div>
 
-        <!-- Prawa strona (Sidebar z analizą - zostawiamy oryginalny układ wizualny) -->
-        <aside class="md:col-span-4 border-l border-gray-300 pl-8">
-            <h3 class="font-sans font-black text-xs uppercase tracking-widest border-b-2 border-black pb-2 mb-6">Na Czasie - Statystyki</h3>
+        <!-- Prawa strona (Sidebar z analizą) -->
+        <aside class="md:col-span-4">
+            <div class="sticky top-24">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 px-1">Insights / Analiza</h3>
 
-            <div class="mt-10 bg-black text-white p-6 rounded-sm">
-                <h3 class="font-sans font-bold text-lg mb-1 flex items-center">Martwe Pole</h3>
-                <p class="text-xs mb-4 text-gray-400">Ta historia jest ignorowana przez większość źródeł.</p>
-                <h4 class="font-serif text-lg font-bold hover:underline cursor-pointer">Kontrowersyjne dotacje dla organizacji pozarządowych</h4>
-                <button class="mt-4 bg-white text-black text-xs font-bold uppercase px-4 py-2 w-full hover:bg-gray-200 transition">Sprawdź analizę</button>
+                <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden group cursor-pointer hover:bg-slate-800 transition-colors">
+                    <!-- Dekoracyjne tło dla boxa -->
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-800 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="flex h-2 w-2 rounded-full bg-red-500"></span>
+                            <h3 class="font-bold text-sm uppercase tracking-wider text-slate-300">Martwe Pole</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Ta historia jest ignorowana przez większość źródeł centrum i lewicy.</p>
+
+                        <h4 class="text-lg font-bold leading-snug mb-6 text-white group-hover:text-blue-300 transition-colors">
+                            Kontrowersyjne dotacje dla organizacji pozarządowych
+                        </h4>
+
+                        <button class="w-full bg-white text-slate-900 text-sm font-semibold rounded-xl px-4 py-3 hover:bg-slate-100 transition shadow-sm">
+                            Sprawdź pełny raport
+                        </button>
+                    </div>
+                </div>
             </div>
         </aside>
     </main>
 
-    <footer class="border-t-4 border-black mt-16 py-8 text-center text-sm font-sans text-gray-600">
-        <p>&copy; 2024 Horyzont. Projekt Frontendu.</p>
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-sm font-medium text-slate-500">&copy; 2024 Horyzont. Projekt Frontendu.</p>
+            <div class="flex gap-4">
+                <a href="#" class="text-sm text-slate-500 hover:text-slate-900 transition-colors">O nas</a>
+                <a href="#" class="text-sm text-slate-500 hover:text-slate-900 transition-colors">Prywatność</a>
+                <a href="#" class="text-sm text-slate-500 hover:text-slate-900 transition-colors">Kontakt</a>
+            </div>
+        </div>
     </footer>
 
-    <script>
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('pl-PL', dateOptions);
-    </script>
+    <script src="../static/js/script.js"></script>
 </body>
 </html>

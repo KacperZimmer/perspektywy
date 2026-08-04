@@ -67,14 +67,15 @@ def view_event(request, id):
 
 
 def index(request):
-
+    clusters_to_show = []
 
     clusters_to_show = []
-    clusters = EmbeddedArticles.objects.defer('centroid').values('cluster_id').annotate(
+
+    clusters = EmbeddedArticles.objects.defer('centroid').values(
+        'cluster_id', 'cluster__updated_at'
+    ).annotate(
         articles_per_cluster=Count('id')
-    )
-
-
+    ).order_by('-cluster__created_at')
 
 
 
@@ -113,6 +114,7 @@ def index(request):
 
             clusters_to_show.append({
                 "cluster_id": single_id_cluster,
+                "updated_at" : clusters[single_id_cluster],
                 "articles": cluster_articles
             })
 
