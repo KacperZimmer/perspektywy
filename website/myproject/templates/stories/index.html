@@ -84,13 +84,15 @@
                     </div>
 
                     <!-- Inne perspektywy (Zewnętrzne linki do źródeł) -->
+              <!-- Inne perspektywy (Zewnętrzne linki do źródeł) -->
                     <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-6">
                         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                             Nagłówki w mediach
                         </h4>
                         <ul class="flex flex-col gap-3">
-                            {% for article in cluster_data.articles|slice:"1:" %}
+                            <!-- TUTAJ ZMIANA: Usunięto |slice:"1:" -->
+                            {% for article in cluster_data.articles %}
                                 <li class="text-sm group flex items-start sm:items-center gap-2">
                                     <span class="font-semibold text-slate-900 shrink-0">{{ article.source }}:</span>
                                     <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="text-slate-600 group-hover:text-blue-600 transition-colors line-clamp-1">

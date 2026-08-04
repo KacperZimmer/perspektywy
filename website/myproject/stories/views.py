@@ -50,7 +50,7 @@ def view_event(request, id):
 
     context = {
         "cluster": cluster,
-        "articles": articles,  # Przekazujemy przefiltrowane artykuły
+        "articles": articles,
         "stats": {
             "total": total_articles,
             "left_percent": left_percent,
@@ -76,6 +76,9 @@ def index(request):
 
 
 
+
+
+
     for cluster in clusters:
         num_of_occurences = cluster['articles_per_cluster']
         if num_of_occurences >= 5:
@@ -83,10 +86,19 @@ def index(request):
             articles_with_given_cluster_id = EmbeddedArticles.objects.defer('embedding').filter(
                 cluster_id=single_id_cluster)
 
-            cluster_articles = []
-
             source_set = set()
 
+
+
+            cluster_articles = []
+
+            for article in articles_with_given_cluster_id:
+                source_set.add(article.source)
+
+            if len(source_set) <= 1:
+                continue
+
+            source_set = set()
             for article in articles_with_given_cluster_id:
 
                 if article.source not in source_set:
