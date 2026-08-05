@@ -16,13 +16,40 @@ POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://twojadomena.pl)'}
 
 
 def clean_html(raw_html: str) -> str:
-    """Usuwa tagi HTML z opisów w kanałach RSS, zostawiając czysty tekst."""
     if not raw_html:
         return ""
     cleanr = re.compile('<.*?>')
     cleantext = re.sub(cleanr, '', raw_html)
     return " ".join(cleantext.split())
 
+def get_publisher_map() -> dict:
+    conn = None
+
+    try:
+        conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
+        cur = conn.cursor()
+
+        query_to_get_publishers = """
+        SELECT name, id 
+        FROM stories_publisher 
+        """
+        cur.execute(query_to_get_publishers)
+        result = cur.fetchall()
+
+        publisher_map = {}
+
+        for publisher in result:
+            publisher_map[publisher[0]] = publisher[1]
+
+        return publisher_map
+
+    except psycopg2.Error as e:
+        print(f"Błąd bazy danych podczas pobierania klastrów: {e}")
+    except Exception as e:
+        print(f"Błąd ogólny: {e}")
+    finally:
+        if conn:
+            conn.close()
 
 def print_db_clusters() -> None:
     conn = None
@@ -83,6 +110,7 @@ def print_db_clusters() -> None:
     finally:
         if conn:
             conn.close()
+
 def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> None:
     DISTANCE_THRESHOLD = 0.30
 
@@ -97,6 +125,8 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
             title = article['title']
             url = article['url']
             source_name = article['source_name']
+            publisher_id = article['publisher_db_id']
+
             embedding = embeddings_array_as_list[idx]
 
             find_cluster_query = """
@@ -124,11 +154,14 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
                 cluster_id = cur.fetchone()[0]
 
             insert_article_query = """
-                INSERT INTO embedded_articles (cluster_id, title, url, source, embedding) 
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO embedded_articles (cluster_id, title, url, source, embedding, publisher_id) 
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT (url) DO NOTHING;
             """
-            cur.execute(insert_article_query, (cluster_id, title, url, source_name, embedding))
+
+
+
+            cur.execute(insert_article_query, (cluster_id, title, url, source_name, embedding,publisher_id))
 
         conn.commit()
         print(f"✅ Zapisano pomyślnie paczkę {len(article_list)} artykułów do bazy.")
@@ -187,7 +220,7 @@ def create_init_db():
 
 def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
     collected_data = []
-
+    publisher_map = get_publisher_map()
     for source in data_news_companies_map:
         if source.get('type') != 'rss':
             continue
@@ -217,16 +250,18 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
                 clean_summary = clean_summary[:300] + "..."
 
             text_for_embedding = f"{article_title}. {clean_summary}"
-
+            # print(source.get['name'])
             collected_data.append({
                 "source_id": source.get("id"),
                 "source_name": source.get("name"),
+                "publisher_db_id" : publisher_map[source.get("name")],
                 "bias": source.get("bias", "unknown"),
                 "title": article_title,
                 "url": article_url,
                 "text_for_embedding": text_for_embedding
             })
 
+            print(publisher_map[source.get('name')])
             if len(collected_data) >= num_of_data_to_collect:
                 clean_data = prepare_texts_for_embedding(collected_data)
                 embeddings = generate_embeddings(clean_data)
@@ -243,4 +278,5 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
 
 create_init_db()
 agg_news_artictles(SOURCES, 20)
-print_db_clusters()
+# print_db_clusters()
+# get_publisher_map()

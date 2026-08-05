@@ -48,6 +48,7 @@ def view_event(request, id):
         elif center_count == 0 and left_count > 0 and right_count > 0:
             blind_spot_msg = "Temat ten silnie polaryzuje. Piszą o nim media skrajne z obu stron, podczas gdy media centrowe głównego nurtu w ogóle go nie poruszają."
 
+    print(right_count)
     context = {
         "cluster": cluster,
         "articles": articles,
@@ -67,8 +68,6 @@ def view_event(request, id):
 
 
 def index(request):
-    clusters_to_show = []
-
     clusters_to_show = []
 
     clusters = EmbeddedArticles.objects.defer('centroid').values(
