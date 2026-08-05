@@ -278,5 +278,5 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
 
 create_init_db()
 agg_news_artictles(SOURCES, 20)
-# print_db_clusters()
+print_db_clusters()
 # get_publisher_map()
