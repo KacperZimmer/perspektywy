@@ -10,9 +10,14 @@ from data_scraper.test_sources import SOURCES
 from analytics_engine.create_embeddings import (
     prepare_texts_for_embedding,
     generate_embeddings,
-)
 
+)
+from analytics_engine.llm import News_LLM
+
+
+llm_news = News_LLM('qwen3.6:35b')
 POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://twojadomena.pl)'}
+
 
 
 def clean_html(raw_html: str) -> str:
@@ -111,6 +116,7 @@ def print_db_clusters() -> None:
         if conn:
             conn.close()
 
+
 def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> None:
     DISTANCE_THRESHOLD = 0.30
 
@@ -136,15 +142,37 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
                 LIMIT 1;
             """
 
+            find_associated_articles_with_cluster = """
+                SELECT a.title 
+                FROM embedded_articles AS a 
+                INNER JOIN clusters AS c ON a.cluster_id = c.id
+                WHERE c.id = %s
+            """
+
+
+
             cur.execute(find_cluster_query, (embedding,))
             nearest_cluster = cur.fetchone()
 
-            cluster_id = None
 
             if nearest_cluster and nearest_cluster[1] <= DISTANCE_THRESHOLD:
                 cluster_id = nearest_cluster[0]
                 cur.execute("UPDATE clusters SET updated_at = current_timestamp WHERE id = %s", (cluster_id,))
+
+                cur.execute(find_associated_articles_with_cluster, (cluster_id,))
+
+                associated_articles = cur.fetchall()
+
+                cur.execute("SELECT title FROM clusters WHERE id = %s", (cluster_id,))
+                row = cur.fetchone()
+                has_title = row and row[0] is not None
+                if len(associated_articles) >= 3 and not has_title :
+                    response = llm_news.generate_title(associated_articles[0:4])
+                    print(response['response'])
+
+
             else:
+
                 insert_cluster_query = """
                     INSERT INTO clusters (centroid)
                     VALUES (%s::vector)
@@ -152,6 +180,8 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
                 """
                 cur.execute(insert_cluster_query, (embedding,))
                 cluster_id = cur.fetchone()[0]
+
+
 
             insert_article_query = """
                 INSERT INTO embedded_articles (cluster_id, title, url, source, embedding, publisher_id) 
@@ -164,7 +194,7 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
             cur.execute(insert_article_query, (cluster_id, title, url, source_name, embedding,publisher_id))
 
         conn.commit()
-        print(f"✅ Zapisano pomyślnie paczkę {len(article_list)} artykułów do bazy.")
+        # print(f"✅ Zapisano pomyślnie paczkę {len(article_list)} artykułów do bazy.")
 
     except psycopg2.Error as e:
         print(f"Błąd bazy danych: {e}")
@@ -241,7 +271,7 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
             if not article_url:
                 continue
 
-            print(f"  -> Ekstrakcja nagłówka: {article_title}")
+            # print(f"  -> Ekstrakcja nagłówka: {article_title}")
 
             raw_summary = entry.get("summary", "")
             clean_summary = clean_html(raw_summary)

@@ -3,12 +3,6 @@ from django.db.models import Count
 from django.core.paginator import Paginator
 from .models import EmbeddedArticles, Clusters, Publisher
 
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Count
-from django.core.paginator import Paginator
-from .models import EmbeddedArticles, Clusters, Publisher
-
-
 def view_event(request, id):
     cluster = get_object_or_404(Clusters, id=id)
 

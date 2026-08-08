@@ -14,6 +14,7 @@ class Clusters(models.Model):
     centroid = models.TextField(blank=True, null=True)  # This field type is a guess.
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
+    title = models.TextField(max_length=50, null=True)
 
     class Meta:
         db_table = 'clusters'
