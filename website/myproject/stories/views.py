@@ -65,24 +65,22 @@ def index(request):
     clusters_to_show = []
 
     clusters = EmbeddedArticles.objects.defer('centroid').values(
-        'cluster_id', 'cluster__updated_at'
+        'cluster_id', 'cluster__updated_at', 'cluster__title'
     ).annotate(
         articles_per_cluster=Count('id')
     ).order_by('-cluster__created_at')
-
-
-
 
     for cluster in clusters:
         num_of_occurences = cluster['articles_per_cluster']
         if num_of_occurences >= 5:
             single_id_cluster = cluster['cluster_id']
+
+            cluster_ai_title = cluster['cluster__title']
+
             articles_with_given_cluster_id = EmbeddedArticles.objects.defer('embedding').filter(
                 cluster_id=single_id_cluster)
 
             source_set = set()
-
-
 
             cluster_articles = []
 
@@ -94,7 +92,6 @@ def index(request):
 
             source_set = set()
             for article in articles_with_given_cluster_id:
-
                 if article.source not in source_set:
                     cluster_articles.append({
                         "source": article.source,
@@ -102,13 +99,13 @@ def index(request):
                         "title": article.title,
                     })
 
-
                 source_set.add(article.source)
 
             clusters_to_show.append({
                 "cluster_id": single_id_cluster,
-                "updated_at" : clusters[single_id_cluster],
-                "articles": cluster_articles
+                "updated_at": cluster['cluster__updated_at'],
+                "articles": cluster_articles,
+                "cluster_ai_title": cluster_ai_title
             })
 
     paginator = Paginator(clusters_to_show, 4)
@@ -118,7 +115,5 @@ def index(request):
     context = {
         'page_obj': page_obj,
     }
-
-
 
     return render(request, 'stories/index.html', context)

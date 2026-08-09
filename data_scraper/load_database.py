@@ -19,6 +19,73 @@ llm_news = News_LLM('qwen3.6:35b')
 POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://twojadomena.pl)'}
 
 
+# def seed_publishers():
+#     """Funkcja odtwarzająca usuniętych wydawców bezpośrednio z poziomu Pythona"""
+#     publishers_data = [
+#         (1, 'Onet', 0.35, 'onet.pl', ''),
+#         (2, 'TVN24', 0.3, 'tvn24.pl', ''),
+#         (3, 'Polsat News', 0.5, 'polsatnews.pl', ''),
+#         (4, 'Wirtualna Polska', 0.45, 'wp.pl', ''),
+#         (5, 'RMF24', 0.5, 'rmf24.pl', ''),
+#         (6, 'Wprost', 0.6, 'wprost.pl', ''),
+#         (7, 'Rzeczpospolita', 0.65, 'rp.pl', ''),
+#         (8, 'Nowy Obywatel', 0.15, 'nowyobywatel.pl', ''),
+#         (9, 'Fakt', 0.5, 'fakt.pl', ''),
+#         (10, 'Money.pl', 0.5, 'money.pl', ''),
+#         (11, 'Bankier.pl', 0.55, 'bankier.pl', ''),
+#         (12, 'Business Insider Polska', 0.45, 'businessinsider.com.pl', ''),
+#         (13, 'Puls Biznesu', 0.55, 'pb.pl', ''),
+#         (14, 'Energetyka24', 0.5, 'energetyka24.com', ''),
+#         (15, 'DoRzeczy.pl', 0.85, 'dorzeczy.pl', ''),
+#         (16, 'Niezalezna.pl', 0.9, 'niezalezna.pl', ''),
+#         (17, 'Radio Maryja', 0.95, 'radiomaryja.pl', ''),
+#         (18, 'Kresy.pl', 0.95, 'kresy.pl', ''),
+#         (19, 'OKO.press', 0.2, 'oko.press', ''),
+#         (20, 'Najwyższy Czas!', 0.95, 'nczas.info', ''),
+#         (21, 'Magna Polonia', 1.0, 'magnapolonia.org', ''),
+#         (22, 'Krytyka Polityczna', 0.1, 'krytykapolityczna.pl', ''),
+#         (23, 'Strajk.eu', 0.05, 'strajk.eu', ''),
+#         (24, 'Tygodnik Powszechny', 0.4, 'tygodnikpowszechny.pl', ''),
+#         (25, 'Tygodnik Przegląd', 0.15, 'tygodnikprzeglad.pl', ''),
+#         (26, 'Więź', 0.45, 'wiez.pl', '')
+#     ]
+#
+#     conn = None
+#     try:
+#         conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
+#         cur = conn.cursor()
+#
+#         # 1. Upewnijmy się, że kolumna 'domain' w ogóle istnieje
+#         cur.execute("ALTER TABLE stories_publisher ADD COLUMN IF NOT EXISTS domain VARCHAR(255);")
+#
+#         # 2. Skrypt Upsert - wstawia lub aktualizuje w razie istnienia
+#         insert_query = """
+#             INSERT INTO stories_publisher (id, name, bias, domain, logo)
+#             VALUES (%s, %s, %s, %s, %s)
+#             ON CONFLICT (id) DO UPDATE SET
+#                 name = EXCLUDED.name,
+#                 bias = EXCLUDED.bias,
+#                 domain = EXCLUDED.domain,
+#                 logo = EXCLUDED.logo;
+#         """
+#
+#         # Ładujemy każdy wiersz
+#         for pub in publishers_data:
+#             cur.execute(insert_query, pub)
+#
+#         # 3. Bezpieczny reset inkrementacji ID (dla Django)
+#         cur.execute(
+#             "SELECT setval(pg_get_serial_sequence('stories_publisher', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM stories_publisher;")
+#
+#         conn.commit()
+#         print("✅ Pomyślnie odtworzono i zaktualizowano 26 wydawców w tabeli 'stories_publisher'!")
+#
+#     except psycopg2.Error as e:
+#         print(f"❌ Błąd podczas uzupełniania wydawców: {e}")
+#     finally:
+#         if conn:
+#             conn.close()
+
 
 def clean_html(raw_html: str) -> str:
     if not raw_html:
@@ -165,10 +232,14 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
 
                 cur.execute("SELECT title FROM clusters WHERE id = %s", (cluster_id,))
                 row = cur.fetchone()
+
                 has_title = row and row[0] is not None
-                if len(associated_articles) >= 3 and not has_title :
+
+                if len(associated_articles) >= 3 and not has_title:
+
                     response = llm_news.generate_title(associated_articles[0:4])
-                    print(response['response'])
+                    cur.execute("UPDATE clusters set title = %s where id = %s", (response['response'], cluster_id))
+
 
 
             else:
