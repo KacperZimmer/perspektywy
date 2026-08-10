@@ -1,4 +1,6 @@
 from collections import defaultdict
+from contextlib import contextmanager
+
 import feedparser
 import numpy as np
 import psycopg2
@@ -15,6 +17,32 @@ from analytics_engine.llm import News_LLM
 
 llm_news = News_LLM('qwen3.6:35b')
 POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://twojadomena.pl)'}
+
+
+class ManageConnection:
+    def __init__(self, host : str, database : str, user : str, password : str):
+        self.host = host
+        self.user = user
+        self.database = database
+        self.password = password
+
+    @contextmanager
+    def get_db_connection(self):
+
+        conn = None
+
+        try:
+            conn = psycopg2.connect(host=self.host, database=self.database, user=self.user, password=self.password)
+            with conn:
+                with conn.cursor() as cur:
+                    yield cur
+
+        except psycopg2.Error as e:
+            print(f"Błąd bazy danych podczas podsumowywania: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
 
 
 def generate_missing_summaries_for_large_clusters():
