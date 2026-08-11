@@ -19,6 +19,7 @@ llm_news = News_LLM('qwen3.6:35b')
 POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://twojadomena.pl)'}
 
 
+
 class ManageConnection:
     def __init__(self, host : str, database : str, user : str, password : str):
         self.host = host
@@ -43,69 +44,55 @@ class ManageConnection:
         finally:
             if conn:
                 conn.close()
-
+db_manager = ManageConnection(host='localhost', database='kontekst_db', user='newuser', password='password')
 
 def generate_missing_summaries_for_large_clusters():
 
-    conn = None
-    cur = None
-    try:
-        conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
-        cur = conn.cursor()
+        with db_manager.get_db_connection() as cur:
 
-        find_clusters_query = """
-            SELECT c.id 
-            FROM clusters c
-            JOIN embedded_articles e ON c.id = e.cluster_id
-            WHERE c.ai_summary IS NULL
-            GROUP BY c.id
-            HAVING COUNT(e.id) >= 5;
-        """
-        cur.execute(find_clusters_query)
-        clusters_to_process = cur.fetchall()
+            find_clusters_query = """
+                SELECT c.id 
+                FROM clusters c
+                JOIN embedded_articles e ON c.id = e.cluster_id
+                WHERE c.ai_summary IS NULL
+                GROUP BY c.id
+                HAVING COUNT(e.id) >= 5;
+            """
+            cur.execute(find_clusters_query)
+            clusters_to_process = cur.fetchall()
 
-        if not clusters_to_process:
-            print("🟢 Brak nowych klastrów wymagających wygenerowania podsumowania.")
-            return
+            if not clusters_to_process:
+                print("🟢 Brak nowych klastrów wymagających wygenerowania podsumowania.")
+                return
 
-        print(f"\n🔍 Znaleziono {len(clusters_to_process)} klastrów do podsumowania przez AI.")
+            print(f"\n🔍 Znaleziono {len(clusters_to_process)} klastrów do podsumowania przez AI.")
 
-        for cluster_row in clusters_to_process:
-            cluster_id = cluster_row[0]
+            for cluster_row in clusters_to_process:
+                cluster_id = cluster_row[0]
 
-            cur.execute(
-                'SELECT article_description FROM embedded_articles WHERE cluster_id = %s AND article_description IS NOT NULL',
-                (cluster_id,)
-            )
+                cur.execute(
+                    'SELECT article_description FROM embedded_articles WHERE cluster_id = %s AND article_description IS NOT NULL',
+                    (cluster_id,)
+                )
 
-            descriptions_result = cur.fetchall()
-            descriptions = [row[0] for row in descriptions_result if str(row[0]).strip()]
+                descriptions_result = cur.fetchall()
+                descriptions = [row[0] for row in descriptions_result if str(row[0]).strip()]
 
-            if not descriptions:
-                print(f"⚠️ Klaster {cluster_id} nie ma żadnych sensownych opisów. Pomijam.")
-                continue
+                if not descriptions:
+                    print(f"⚠️ Klaster {cluster_id} nie ma żadnych sensownych opisów. Pomijam.")
+                    continue
 
-            print(f"⏳ Generuję podsumowanie dla klastra ID: {cluster_id}...")
+                print(f"⏳ Generuję podsumowanie dla klastra ID: {cluster_id}...")
 
-            ai_response = llm_news.generate_summary(descriptions)
+                ai_response = llm_news.generate_summary(descriptions)
 
-            summary_text = ai_response.get('response', '') if isinstance(ai_response, dict) else ai_response
+                summary_text = ai_response.get('response', '') if isinstance(ai_response, dict) else ai_response
 
-            update_query = "UPDATE clusters SET ai_summary = %s WHERE id = %s"
-            cur.execute(update_query, (summary_text, cluster_id))
+                update_query = "UPDATE clusters SET ai_summary = %s WHERE id = %s"
+                cur.execute(update_query, (summary_text, cluster_id))
 
-            conn.commit()
-            print(f"✅ Podsumowanie dla klastra {cluster_id} pomyślnie zapisane.")
+                print(f"✅ Podsumowanie dla klastra {cluster_id} pomyślnie zapisane.")
 
-    except psycopg2.Error as e:
-        print(f"❌ Błąd bazy danych podczas podsumowywania: {e}")
-    except Exception as e:
-        print(f"❌ Nieoczekiwany błąd: {e}")
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
 
 
 def seed_publishers():
@@ -138,37 +125,26 @@ def seed_publishers():
         (26, 'Więź', 0.45, 'wiez.pl', '')
     ]
 
-    conn = None
-    try:
-        conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
-        cur = conn.cursor()
+    with db_manager.get_db_connection() as cur:
 
-        cur.execute("ALTER TABLE stories_publisher ADD COLUMN IF NOT EXISTS domain VARCHAR(255);")
+            cur.execute("ALTER TABLE stories_publisher ADD COLUMN IF NOT EXISTS domain VARCHAR(255);")
+            insert_query = """
+                INSERT INTO stories_publisher (id, name, bias, domain, logo)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    bias = EXCLUDED.bias,
+                    domain = EXCLUDED.domain,
+                    logo = EXCLUDED.logo;
+            """
 
-        insert_query = """
-            INSERT INTO stories_publisher (id, name, bias, domain, logo)
-            VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (id) DO UPDATE SET
-                name = EXCLUDED.name,
-                bias = EXCLUDED.bias,
-                domain = EXCLUDED.domain,
-                logo = EXCLUDED.logo;
-        """
+            for pub in publishers_data:
+                cur.execute(insert_query, pub)
 
-        for pub in publishers_data:
-            cur.execute(insert_query, pub)
+            cur.execute(
+                "SELECT setval(pg_get_serial_sequence('stories_publisher', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM stories_publisher;")
 
-        cur.execute(
-            "SELECT setval(pg_get_serial_sequence('stories_publisher', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM stories_publisher;")
-
-        conn.commit()
-        print("✅ Pomyślnie odtworzono i zaktualizowano 26 wydawców w tabeli 'stories_publisher'!")
-
-    except psycopg2.Error as e:
-        print(f"❌ Błąd podczas uzupełniania wydawców: {e}")
-    finally:
-        if conn:
-            conn.close()
+            print("✅ Pomyślnie odtworzono i zaktualizowano 26 wydawców w tabeli 'stories_publisher'!")
 
 
 def clean_html(raw_html: str) -> str:
@@ -180,90 +156,71 @@ def clean_html(raw_html: str) -> str:
 
 
 def get_publisher_map() -> dict:
-    conn = None
-    try:
-        conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
-        cur = conn.cursor()
+
+    with db_manager.get_db_connection() as cur:
         cur.execute("SELECT name, id FROM stories_publisher")
         result = cur.fetchall()
 
         publisher_map = {publisher[0]: publisher[1] for publisher in result}
         return publisher_map
-    except psycopg2.Error as e:
-        print(f"Błąd bazy danych podczas pobierania klastrów: {e}")
-    except Exception as e:
-        print(f"Błąd ogólny: {e}")
-    finally:
-        if conn:
-            conn.close()
 
 
 def print_db_clusters() -> None:
-    conn = None
-    try:
-        conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
-        cur = conn.cursor()
 
-        query = """
-            SELECT c.id, a.source, a.title
-            FROM clusters c
-            JOIN embedded_articles a ON c.id = a.cluster_id
-            ORDER BY c.updated_at DESC;
-        """
-        cur.execute(query)
-        rows = cur.fetchall()
+        with db_manager.get_db_connection() as cur:
 
-        if not rows:
-            print("Brak danych w bazie. Uruchom najpierw scraper!")
-            return
+            query = """
+                SELECT c.id, a.source, a.title
+                FROM clusters c
+                JOIN embedded_articles a ON c.id = a.cluster_id
+                ORDER BY c.updated_at DESC;
+            """
+            cur.execute(query)
+            rows = cur.fetchall()
 
-        clusters = defaultdict(list)
-        for cluster_id, source, title in rows:
-            clusters[cluster_id].append({'source': source, 'title': title})
+            if not rows:
+                print("Brak danych w bazie. Uruchom najpierw scraper!")
+                return
 
-        print("\n" + "=" * 65)
-        print(" AKTUALNY STAN KLASTRÓW W BAZIE (HORYZONT)")
-        print("=" * 65)
+            clusters = defaultdict(list)
+            for cluster_id, source, title in rows:
+                clusters[cluster_id].append({'source': source, 'title': title})
 
-        sorted_clusters = sorted(
-            clusters.items(),
-            key=lambda item: (len(set(x['source'] for x in item[1])), len(item[1])),
-            reverse=True
-        )
+            print("\n" + "=" * 65)
+            print(" AKTUALNY STAN KLASTRÓW W BAZIE (HORYZONT)")
+            print("=" * 65)
 
-        for cluster_id, articles in sorted_clusters:
-            unique_sources = set(article['source'] for article in articles)
+            sorted_clusters = sorted(
+                clusters.items(),
+                key=lambda item: (len(set(x['source'] for x in item[1])), len(item[1])),
+                reverse=True
+            )
 
-            if len(unique_sources) == 1:
-                if len(articles) == 1:
-                    print(f"\n⚫ POJEDYNCZY NEWS (ID Klastra: {cluster_id}):")
+            for cluster_id, articles in sorted_clusters:
+                unique_sources = set(article['source'] for article in articles)
+
+                if len(unique_sources) == 1:
+                    if len(articles) == 1:
+                        print(f"\n⚫ POJEDYNCZY NEWS (ID Klastra: {cluster_id}):")
+                    else:
+                        source_name = list(unique_sources)[0]
+                        print(f"\n🟡 ŚLEPY PUNKT / TEMAT LOKALNY (ID: {cluster_id}) - Zdominowany przez [{source_name}]:")
                 else:
-                    source_name = list(unique_sources)[0]
-                    print(f"\n🟡 ŚLEPY PUNKT / TEMAT LOKALNY (ID: {cluster_id}) - Zdominowany przez [{source_name}]:")
-            else:
-                print(
-                    f"\n🟢 GŁÓWNY TEMAT (ID Klastra: {cluster_id}) [{len(unique_sources)} różnych źródeł, łącznie {len(articles)} artykułów]:")
+                    print(
+                        f"\n🟢 GŁÓWNY TEMAT (ID Klastra: {cluster_id}) [{len(unique_sources)} różnych źródeł, łącznie {len(articles)} artykułów]:")
 
-            for article in articles:
-                print(f"  - [{article['source']}] {article['title']}")
+                for article in articles:
+                    print(f"  - [{article['source']}] {article['title']}")
 
-        print("\n" + "=" * 65)
+            print("\n" + "=" * 65)
 
-    except psycopg2.Error as e:
-        print(f"Błąd bazy danych: {e}")
-    except Exception as e:
-        print(f"Błąd ogólny: {e}")
-    finally:
-        if conn:
-            conn.close()
+
 
 
 def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> None:
     DISTANCE_THRESHOLD = 0.30
-    conn = None
-    try:
-        conn = psycopg2.connect(host='localhost', database='kontekst_db', user='newuser', password='password')
-        cur = conn.cursor()
+
+    with db_manager.get_db_connection() as cur:
         embeddings_array_as_list = embeddings_array.tolist()
 
         for idx, article in enumerate(article_list):
@@ -323,15 +280,6 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
             cur.execute(insert_article_query,
                         (cluster_id, title, url, source_name, embedding, publisher_id, article_rss_description))
 
-        conn.commit()
-    except psycopg2.Error as e:
-        print(f"Błąd bazy danych podczas zapisu klastra: {e}")
-    except Exception as e:
-        print(f"Błąd ogólny podczas zapisu: {e}")
-    finally:
-        if conn:
-            conn.close()
-
 
 def create_init_db():
     create_table_articles_command = """
@@ -357,20 +305,12 @@ def create_init_db():
         );    
     """
     conn = None
-    try:
-        conn = psycopg2.connect(
-            host='localhost', database='kontekst_db', user='newuser', password='password'
-        )
-        cur = conn.cursor()
-        cur.execute(create_table_clusters_command)
-        cur.execute(create_table_articles_command)
-        conn.commit()
-        print("✅ Tabele 'clusters' i 'embedded_articles' utworzone/zaktualizowane pomyślnie.")
-    except Exception as e:
-        print(f"❌ Nieoczekiwany błąd podczas tworzenia tabel: {e}")
-    finally:
-        if conn:
-            conn.close()
+    with db_manager.get_db_connection() as cur:
+
+            cur.execute(create_table_clusters_command)
+            cur.execute(create_table_articles_command)
+
+            print("✅ Tabele 'clusters' i 'embedded_articles' utworzone/zaktualizowane pomyślnie.")
 
 
 def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
