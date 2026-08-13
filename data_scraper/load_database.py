@@ -6,7 +6,6 @@ import psycopg2
 import requests
 import re
 
-
 from data_scraper.test_sources import SOURCES
 from analytics_engine.create_embeddings import (
     prepare_texts_for_embedding,
@@ -17,6 +16,8 @@ from analytics_engine.llm import News_LLM
 
 llm_news = News_LLM('qwen3.6:35b')
 POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://horyzonty.pl)'}
+
+
 
 
 
