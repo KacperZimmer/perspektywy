@@ -51,6 +51,7 @@ def generate_missing_summaries_for_large_clusters():
 
         with db_manager.get_db_connection() as cur:
 
+
             find_clusters_query = """
                 SELECT c.id 
                 FROM clusters c
