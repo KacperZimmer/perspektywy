@@ -1,6 +1,5 @@
 from collections import defaultdict
 from contextlib import contextmanager
-
 import feedparser
 import numpy as np
 import psycopg2
@@ -16,7 +15,9 @@ from analytics_engine.llm import News_LLM
 
 
 llm_news = News_LLM('qwen3.6:35b')
-POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://twojadomena.pl)'}
+POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://horyzonty.pl)'}
+
+
 
 
 
@@ -49,6 +50,7 @@ db_manager = ManageConnection(host='localhost', database='kontekst_db', user='ne
 def generate_missing_summaries_for_large_clusters():
 
         with db_manager.get_db_connection() as cur:
+
 
             find_clusters_query = """
                 SELECT c.id 
@@ -93,7 +95,30 @@ def generate_missing_summaries_for_large_clusters():
 
                 print(f"✅ Podsumowanie dla klastra {cluster_id} pomyślnie zapisane.")
 
+def populate_cluster_titles():
 
+    clusters = []
+    find_clusters_missing_titles = """
+        SELECT c.id,                                                                                                                                                                                                   
+        array_agg(a.article_description ORDER BY a.id) as article_descriptions,                                                                                                                                 
+        count(a.cluster_id) as num_of_articles                                                                                                                                                                  
+        FROM embedded_articles a                                                                                                                                                                                       
+        JOIN clusters c ON a.cluster_id = c.id                                                                                                                                                                         
+        GROUP BY c.id                                                                                                                                                                                                  
+        HAVING count(a.cluster_id) >= 5;  
+    """
+    result = []
+    with db_manager.get_db_connection() as cur:
+
+        cur.execute(find_clusters_missing_titles)
+        result = cur.fetchall()
+
+
+    values_to_update = []
+    for i in range(len(result)):
+        response_ai = llm_news.generate_title(result[i][1])
+        values_to_update.append((result[i][0], response_ai))
+        print(response_ai, result[i][0])
 
 def seed_publishers():
     publishers_data = [
@@ -259,9 +284,10 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
                 has_title = row and row[0] is not None
 
                 if len(associated_articles) >= 5 and not has_title:
-                    response = llm_news.generate_title(associated_articles[0:4])
-                    title_resp = response.get('response', '') if isinstance(response, dict) else response
-                    cur.execute("UPDATE clusters set title = %s where id = %s", (title_resp, cluster_id))
+                    pass
+                    # response = llm_news.generate_title(associated_articles[0:4])
+                    # title_resp = response.get('response', '') if isinstance(response, dict) else response
+                    # cur.execute("UPDATE clusters set title = %s where id = %s", (title_resp, cluster_id))
 
             else:
                 insert_cluster_query = """
@@ -279,6 +305,7 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
             """
             cur.execute(insert_article_query,
                         (cluster_id, title, url, source_name, embedding, publisher_id, article_rss_description))
+
 
 
 def create_init_db():
@@ -304,7 +331,6 @@ def create_init_db():
             ai_summary text
         );    
     """
-    conn = None
     with db_manager.get_db_connection() as cur:
 
             cur.execute(create_table_clusters_command)
@@ -374,22 +400,24 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
         save_data_to_postgres(embeddings, collected_data)
 
 
+#
+# def run_pipeline():
+#     print("==================================================")
+#     print(" 🚀 START DATA PIPELINE: HORYZONT NEWS SYSTEM")
+#     print("==================================================")
+#
+#     print("\n[ETAP 1] Pobieranie artykułów i aktualizacja klastrów...")
+#     agg_news_artictles(SOURCES, 20)
+#
+#     print("\n[ETAP 2] Uruchamianie agentów AI do analizy i tworzenia podsumowań...")
+#     generate_missing_summaries_for_large_clusters()
+#
+#     print("\n[ETAP 3] Przegląd aktualnego stanu...")
+#     print_db_clusters()
+#
+#     print("\n✅ Koniec procesu. System wykonał pełen cykl.")
+#
+#
+# run_pipeline()
 
-def run_pipeline():
-    print("==================================================")
-    print(" 🚀 START DATA PIPELINE: HORYZONT NEWS SYSTEM")
-    print("==================================================")
-
-    print("\n[ETAP 1] Pobieranie artykułów i aktualizacja klastrów...")
-    agg_news_artictles(SOURCES, 20)
-
-    print("\n[ETAP 2] Uruchamianie agentów AI do analizy i tworzenia podsumowań...")
-    generate_missing_summaries_for_large_clusters()
-
-    print("\n[ETAP 3] Przegląd aktualnego stanu...")
-    print_db_clusters()
-
-    print("\n✅ Koniec procesu. System wykonał pełen cykl.")
-
-
-run_pipeline()
+populate_cluster_titles()
