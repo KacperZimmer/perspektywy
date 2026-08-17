@@ -6,13 +6,12 @@ import psycopg2
 import requests
 import re
 
-from data_scraper.test_sources import SOURCES
 from analytics_engine.create_embeddings import (
     prepare_texts_for_embedding,
     generate_embeddings,
 )
 from analytics_engine.llm import News_LLM
-
+from analytics_engine.sources_config import SOURCES
 
 llm_news = News_LLM('qwen3.6:35b')
 POLITE_HEADERS = {'User-Agent': 'KontekstBot/1.0 (+http://horyzonty.pl)'}
@@ -100,12 +99,13 @@ def populate_cluster_titles():
     clusters = []
     find_clusters_missing_titles = """
         SELECT c.id,                                                                                                                                                                                                   
-        array_agg(a.article_description ORDER BY a.id) as article_descriptions,                                                                                                                                 
-        count(a.cluster_id) as num_of_articles                                                                                                                                                                  
-        FROM embedded_articles a                                                                                                                                                                                       
-        JOIN clusters c ON a.cluster_id = c.id                                                                                                                                                                         
-        GROUP BY c.id                                                                                                                                                                                                  
-        HAVING count(a.cluster_id) >= 5;  
+         array_agg(a.article_description ORDER BY a.id) as article_descriptions,                                                                                                                                 
+         count(a.cluster_id) as num_of_articles                                                                                                                                                                  
+          FROM embedded_articles a                                                                                                                                                                                       
+          JOIN clusters c ON a.cluster_id = c.id                                                                                                                                                                         
+          WHERE c.title IS NULL                                                                                                                                                                                          
+          GROUP BY c.id                                                                                                                                                                                                  
+          HAVING count(a.cluster_id) >= 5;  
     """
     result = []
     with db_manager.get_db_connection() as cur:
@@ -262,12 +262,12 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
                 ORDER BY distance ASC
                 LIMIT 1;
             """
-            find_associated_articles_with_cluster = """
-                SELECT a.title 
-                FROM embedded_articles AS a 
-                INNER JOIN clusters AS c ON a.cluster_id = c.id
-                WHERE c.id = %s
-            """
+            # find_associated_articles_with_cluster = """
+            #     SELECT a.title
+            #     FROM embedded_articles AS a
+            #     INNER JOIN clusters AS c ON a.cluster_id = c.id
+            #     WHERE c.id = %s
+            # """
 
             cur.execute(find_cluster_query, (embedding,))
             nearest_cluster = cur.fetchone()
@@ -276,18 +276,18 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: list) -> N
                 cluster_id = nearest_cluster[0]
                 cur.execute("UPDATE clusters SET updated_at = current_timestamp WHERE id = %s", (cluster_id,))
 
-                cur.execute(find_associated_articles_with_cluster, (cluster_id,))
-                associated_articles = cur.fetchall()
+                # cur.execute(find_associated_articles_with_cluster, (cluster_id,))
+                # associated_articles = cur.fetchall()
 
-                cur.execute("SELECT title FROM clusters WHERE id = %s", (cluster_id,))
-                row = cur.fetchone()
-                has_title = row and row[0] is not None
-
-                if len(associated_articles) >= 5 and not has_title:
-                    pass
-                    # response = llm_news.generate_title(associated_articles[0:4])
-                    # title_resp = response.get('response', '') if isinstance(response, dict) else response
-                    # cur.execute("UPDATE clusters set title = %s where id = %s", (title_resp, cluster_id))
+                # cur.execute("SELECT title FROM clusters WHERE id = %s", (cluster_id,))
+                # row = cur.fetchone()
+                # has_title = row and row[0] is not None
+                #
+                # if len(associated_articles) >= 5 and not has_title:
+                #     pass
+                #     # response = llm_news.generate_title(associated_articles[0:4])
+                #     # title_resp = response.get('response', '') if isinstance(response, dict) else response
+                #     # cur.execute("UPDATE clusters set title = %s where id = %s", (title_resp, cluster_id))
 
             else:
                 insert_cluster_query = """
@@ -400,24 +400,24 @@ def agg_news_artictles(data_news_companies_map, num_of_data_to_collect: int):
         save_data_to_postgres(embeddings, collected_data)
 
 
-#
-# def run_pipeline():
-#     print("==================================================")
-#     print(" 🚀 START DATA PIPELINE: HORYZONT NEWS SYSTEM")
-#     print("==================================================")
-#
-#     print("\n[ETAP 1] Pobieranie artykułów i aktualizacja klastrów...")
-#     agg_news_artictles(SOURCES, 20)
-#
-#     print("\n[ETAP 2] Uruchamianie agentów AI do analizy i tworzenia podsumowań...")
-#     generate_missing_summaries_for_large_clusters()
-#
-#     print("\n[ETAP 3] Przegląd aktualnego stanu...")
-#     print_db_clusters()
-#
-#     print("\n✅ Koniec procesu. System wykonał pełen cykl.")
-#
-#
-# run_pipeline()
 
-populate_cluster_titles()
+def run_pipeline():
+    print("==================================================")
+    print(" 🚀 START DATA PIPELINE: HORYZONT NEWS SYSTEM")
+    print("==================================================")
+
+    print("\n[ETAP 1] Pobieranie artykułów i aktualizacja klastrów...")
+    agg_news_artictles(SOURCES, 20)
+
+    print("\n[ETAP 2] Uruchamianie agentów AI do analizy i tworzenia podsumowań...")
+    generate_missing_summaries_for_large_clusters()
+
+    print("\n[ETAP 3] Przegląd aktualnego stanu...")
+    print_db_clusters()
+
+    print("\n✅ Koniec procesu. System wykonał pełen cykl.")
+
+
+run_pipeline()
+
+# populate_cluster_titles()
