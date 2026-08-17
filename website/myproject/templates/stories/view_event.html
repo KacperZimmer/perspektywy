@@ -10,250 +10,307 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        background: '#0a0a0a',
+                        surface: '#171717',
+                        bordercolor: '#2d2d2d',
+                        bias: {
+                            farleft: '#991b1b',   /* Red 800 */
+                            left: '#dc2626',      /* Red 600 */
+                            leanleft: '#f87171',  /* Red 400 */
+                            center: '#9ca3af',    /* Gray 400 */
+                            leanright: '#60a5fa', /* Blue 400 */
+                            right: '#2563eb',     /* Blue 600 */
+                            farright: '#1e3a8a'   /* Blue 900 */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
+        /* Subtelny efekt podniesienia kropki, bez przesadzonych animacji */
+        .source-circle {
+            transition: all 0.2s ease-in-out;
+        }
         .source-circle:hover {
-            z-index: 50 !important;
-            transform: scale(1.15);
+            transform: translateY(-2px);
+            border-color: #ffffff;
+            z-index: 10;
         }
     </style>
 </head>
-<body class="font-sans antialiased text-[#e5e5e5] bg-[#121212] min-h-screen flex flex-col selection:bg-gray-700">
+<body class="font-sans antialiased text-gray-300 bg-background min-h-screen flex flex-col selection:bg-gray-700">
 
-    <!-- 7-stopniowy, płynny pasek na samej górze -->
-    <div class="flex h-1 w-full fixed top-0 z-50 opacity-90">
-        <div class="w-[14.28%] bg-[#b91c1c]"></div>
-        <div class="w-[14.28%] bg-[#ef4444]"></div>
-        <div class="w-[14.28%] bg-[#f87171]"></div>
-        <div class="w-[14.28%] bg-[#d1d5db]"></div>
-        <div class="w-[14.28%] bg-[#93c5fd]"></div>
-        <div class="w-[14.28%] bg-[#3b82f6]"></div>
-        <div class="w-[14.28%] bg-[#1d4ed8]"></div>
+    <!-- Cienki pasek spektrum na samej górze (statyczny, czysty) -->
+    <div class="flex h-1 w-full fixed top-0 z-50">
+        <div class="w-[14.28%] bg-bias-farleft"></div>
+        <div class="w-[14.28%] bg-bias-left"></div>
+        <div class="w-[14.28%] bg-bias-leanleft"></div>
+        <div class="w-[14.28%] bg-bias-center"></div>
+        <div class="w-[14.28%] bg-bias-leanright"></div>
+        <div class="w-[14.28%] bg-bias-right"></div>
+        <div class="w-[14.28%] bg-bias-farright"></div>
     </div>
 
-    <!-- Header -->
-    <header class="bg-[#121212]/90 backdrop-blur-md border-b border-[#2a2a2a] sticky top-1 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <a href="{% url 'index' %}" class="text-xl font-extrabold tracking-tight text-white">HORYZONT</a>
-                <span class="hidden sm:block px-2 py-0.5 rounded border border-[#2a2a2a] bg-[#222] text-gray-300 text-[10px] font-bold uppercase tracking-wider">Beta</span>
+    <!-- Płaski, tradycyjny Navbar informacyjny (zgodny ze stroną główną) -->
+    <header class="bg-background border-b border-bordercolor sticky top-1 z-40">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex justify-between items-center">
+
+            <div class="flex items-center gap-8">
+                <!-- Logo -->
+                <a href="{% url 'index' %}" class="text-xl font-extrabold tracking-tight text-white uppercase flex items-center gap-2">
+                    Horyzont
+                    <span class="bg-gray-800 text-gray-400 text-[9px] px-1.5 py-0.5 rounded border border-gray-700">BETA</span>
+                </a>
+
+                <!-- Kategoriowe Menu (Klasyczne) -->
+                <nav class="hidden md:flex items-center gap-5 text-sm font-medium">
+                    <a href="{% url 'index' %}" class="text-white border-b-2 border-white py-4">Wydarzenia</a>
+                    <a href="#" class="text-gray-400 hover:text-white py-4 transition-colors">Analizy AI</a>
+                    <a href="#" class="text-gray-400 hover:text-white py-4 transition-colors">Moje Źródła</a>
+                    <a href="#" class="text-gray-400 hover:text-white py-4 transition-colors">Zapisane</a>
+                </nav>
             </div>
-            <a href="{% url 'index' %}" class="text-sm font-semibold text-[#9ca3af] hover:text-white transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Wróć
-            </a>
+
+            <!-- Narzędzia profilowe -->
+            <div class="flex items-center gap-4 text-sm">
+                <a href="{% url 'index' %}" class="text-xs font-semibold text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 border border-bordercolor px-2 py-1 rounded">
+                    &larr; Wróć
+                </a>
+                <div class="w-px h-4 bg-bordercolor hidden sm:block"></div>
+                <div class="hidden sm:flex items-center gap-2 cursor-pointer group">
+                    <div class="w-7 h-7 bg-gray-800 rounded-full flex items-center justify-center border border-gray-600 group-hover:border-white transition-colors">
+                        <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <span class="text-gray-300 font-semibold group-hover:text-white">Marek K.</span>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
+    <main class="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
 
         <!-- LEWA KOLUMNA: Tytuł, Podsumowanie, Lista -->
-        <div class="lg:col-span-7 xl:col-span-8 flex flex-col">
+        <div class="lg:col-span-8 flex flex-col">
 
-            <!-- Tytuł i Podsumowanie AI -->
-            <div class="mb-10">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-xs font-semibold text-gray-400">ID Klastra: {{ cluster.id }}</span>
+            <!-- Nagłówek wydarzenia -->
+            <div class="mb-8 border-b border-bordercolor pb-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Temat Dnia</span>
+                    <span class="text-[10px] font-bold text-gray-500 border-l border-bordercolor pl-3">ID Klastra: {{ cluster.id }}</span>
                 </div>
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white leading-snug mb-6">
+
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight mb-6">
                     {{ cluster.title|default:"Brak ustalonego tytułu w bazie" }}
                 </h1>
 
-                <div class="prose prose-invert prose-lg text-gray-300 leading-relaxed max-w-none">
-                    {% if cluster.ai_summary %}
-                        {{ cluster.ai_summary|linebreaks }}
-                    {% else %}
-                        <p class="italic text-gray-500">Podsumowanie AI dla tego wydarzenia nie zostało jeszcze wygenerowane.</p>
-                    {% endif %}
+                <!-- Raport AI - Zamiast gradientów, wygląd profesjonalnego "Executive Brief" -->
+                <div class="bg-surface border border-bordercolor rounded p-6 sm:p-8">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Synteza AI / Executive Brief
+                    </h3>
+
+                    <div class="prose prose-invert prose-p:text-gray-300 prose-p:leading-relaxed max-w-none text-[15px]">
+                        {% if cluster.ai_summary %}
+                            {{ cluster.ai_summary|linebreaks }}
+                        {% else %}
+                            <p class="italic text-gray-500">System zbiera dane z powiązanych artykułów. Podsumowanie będzie wkrótce gotowe.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
-            <!-- Zakładki -->
-            <div class="border-b border-[#2a2a2a] flex items-center gap-6 mb-2">
-                <button class="pb-3 border-b-2 border-white text-white font-semibold text-sm flex items-center gap-2">
-                    Wszystkie <span class="bg-[#222] border border-[#2a2a2a] text-gray-300 text-[10px] px-1.5 py-0.5 rounded-full">{{ stats.total }}</span>
-                </button>
-            </div>
+            <!-- Tablica artykułów / Relacji -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-white">Przegląd Źródeł</h3>
+                    <span class="text-xs font-semibold text-gray-400 bg-surface border border-bordercolor px-2 py-1 rounded">Łącznie relacji: {{ stats.total }}</span>
+                </div>
 
-            <!-- Lista artykułów -->
-            <div class="flex flex-col">
-                {% for article in articles %}
-                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="group block py-5 border-b border-[#2a2a2a] hover:bg-white/5 transition-colors -mx-4 px-4 rounded-lg">
-                    <div class="flex flex-col gap-2">
-                        <h4 class="text-lg font-medium text-gray-200 group-hover:text-white transition-colors leading-snug">
-                            {{ article.title }}
-                        </h4>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-xs font-semibold text-gray-400 border border-[#2a2a2a] bg-[#222] px-2 py-0.5 rounded flex items-center gap-1">
-                                {{ article.publisher.name|default:article.source }}
-                            </span>
+                <!-- Lista (Gęsty układ tabelaryczny) -->
+                <div class="border-t border-bordercolor">
+                    {% for article in articles %}
+                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="group flex flex-col sm:flex-row sm:items-center py-4 border-b border-bordercolor hover:bg-surface transition-colors px-2 -mx-2 rounded">
 
-                            <!-- Etykieta biasu na 7 poziomów -->
+                        <!-- Źródło i Bias (Lewa strona na desktopie) -->
+                        <div class="sm:w-1/4 shrink-0 flex items-center gap-2 mb-2 sm:mb-0">
                             {% if article.publisher.bias != None %}
                                 {% with b=article.publisher.bias %}
-                                    {% if b <= 0.15 %}
-                                        <span class="text-[10px] font-bold text-white bg-[#b91c1c] px-1.5 py-0.5 rounded uppercase">Skrajna Lewica</span>
-                                    {% elif b <= 0.30 %}
-                                        <span class="text-[10px] font-bold text-white bg-[#ef4444] px-1.5 py-0.5 rounded uppercase">Lewica</span>
-                                    {% elif b <= 0.45 %}
-                                        <span class="text-[10px] font-bold text-white bg-[#f87171] px-1.5 py-0.5 rounded uppercase">Lekko Lewicowe</span>
-                                    {% elif b <= 0.55 %}
-                                        <span class="text-[10px] font-bold text-black bg-[#d1d5db] px-1.5 py-0.5 rounded uppercase">Centrum</span>
-                                    {% elif b <= 0.70 %}
-                                        <span class="text-[10px] font-bold text-black bg-[#93c5fd] px-1.5 py-0.5 rounded uppercase">Lekko Prawicowe</span>
-                                    {% elif b <= 0.85 %}
-                                        <span class="text-[10px] font-bold text-white bg-[#3b82f6] px-1.5 py-0.5 rounded uppercase">Prawica</span>
-                                    {% else %}
-                                        <span class="text-[10px] font-bold text-white bg-[#1d4ed8] px-1.5 py-0.5 rounded uppercase">Skrajna Prawica</span>
+                                    {% if b <= 0.15 %}<span class="w-2.5 h-2.5 rounded-full bg-bias-farleft" title="Skrajna Lewica"></span>
+                                    {% elif b <= 0.30 %}<span class="w-2.5 h-2.5 rounded-full bg-bias-left" title="Lewica"></span>
+                                    {% elif b <= 0.45 %}<span class="w-2.5 h-2.5 rounded-full bg-bias-leanleft" title="Lekko Lewicowe"></span>
+                                    {% elif b <= 0.55 %}<span class="w-2.5 h-2.5 rounded-full bg-bias-center" title="Centrum"></span>
+                                    {% elif b <= 0.70 %}<span class="w-2.5 h-2.5 rounded-full bg-bias-leanright" title="Lekko Prawicowe"></span>
+                                    {% elif b <= 0.85 %}<span class="w-2.5 h-2.5 rounded-full bg-bias-right" title="Prawica"></span>
+                                    {% else %}<span class="w-2.5 h-2.5 rounded-full bg-bias-farright" title="Skrajna Prawica"></span>
                                     {% endif %}
                                 {% endwith %}
                             {% else %}
-                                <span class="text-[10px] font-bold text-gray-300 bg-gray-700 px-1.5 py-0.5 rounded uppercase">Nieznany</span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-600" title="Nieznany"></span>
                             {% endif %}
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider group-hover:text-white transition-colors">
+                                {{ article.publisher.name|default:article.source }}
+                            </span>
                         </div>
-                    </div>
-                </a>
-                {% empty %}
-                    <div class="py-10 text-center">
-                        <p class="text-[#9ca3af]">Brak przypisanych artykułów.</p>
-                    </div>
-                {% endfor %}
+
+                        <!-- Tytuł (Środek i prawa strona) -->
+                        <div class="sm:w-3/4 flex justify-between items-center pr-2">
+                            <h4 class="text-[15px] font-medium text-gray-200 group-hover:text-blue-400 transition-colors leading-snug line-clamp-2">
+                                {{ article.title }}
+                            </h4>
+                            <svg class="w-4 h-4 text-gray-600 group-hover:text-blue-400 shrink-0 ml-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </div>
+                    </a>
+                    {% empty %}
+                        <div class="py-12 text-center">
+                            <p class="text-gray-500">Brak przypisanych artykułów.</p>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
 
         </div>
 
-        <!-- PRAWA KOLUMNA: 7-stopniowy rozkład (Pills + Gradientowy Pasek) -->
-        <aside class="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
+        <!-- PRAWA KOLUMNA: Panel Danych (Data Dashboard) -->
+        <aside class="lg:col-span-4 flex flex-col gap-6">
 
-            <div class="bg-[#1c1c1c] border border-[#2a2a2a] rounded-xl p-5 sticky top-20 shadow-xl">
+            <div class="bg-surface border border-bordercolor rounded p-6 sticky top-20">
 
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
-                        Rozkład Przekazu (7 Skala)
-                    </h3>
+                <div class="mb-6 border-b border-bordercolor pb-4">
+                    <h3 class="text-xs font-bold text-white uppercase tracking-widest">Analiza Rozkładu Przekazu</h3>
+                    <p class="text-[11px] text-gray-500 mt-1">Pokazuje, w jakim spektrum politycznym dyskutuje się o tym wydarzeniu.</p>
                 </div>
 
-                <!-- 7-stopniowy Pasek Procentowy -->
-                <div class="w-full h-7 flex overflow-hidden mb-6 rounded shadow-inner text-[9px] font-bold text-center leading-7 text-white">
-                    {% if stats.far_left_percent > 0 %}<div class="bg-[#b91c1c]" style="width: {{ stats.far_left_percent }}%" title="Skrajna Lewica">FL</div>{% endif %}
-                    {% if stats.left_percent > 0 %}<div class="bg-[#ef4444]" style="width: {{ stats.left_percent }}%" title="Lewica">L</div>{% endif %}
-                    {% if stats.lean_left_percent > 0 %}<div class="bg-[#f87171] text-black" style="width: {{ stats.lean_left_percent }}%" title="Lekko Lewicowe">LL</div>{% endif %}
-                    {% if stats.center_percent > 0 %}<div class="bg-[#d1d5db] text-black" style="width: {{ stats.center_percent }}%" title="Centrum">C</div>{% endif %}
-                    {% if stats.lean_right_percent > 0 %}<div class="bg-[#93c5fd] text-black" style="width: {{ stats.lean_right_percent }}%" title="Lekko Prawicowe">LR</div>{% endif %}
-                    {% if stats.right_percent > 0 %}<div class="bg-[#3b82f6]" style="width: {{ stats.right_percent }}%" title="Prawica">R</div>{% endif %}
-                    {% if stats.far_right_percent > 0 %}<div class="bg-[#1d4ed8]" style="width: {{ stats.far_right_percent }}%" title="Skrajna Prawica">FR</div>{% endif %}
+                <!-- CZYSTY Pasek Procentowy -->
+                <div class="w-full h-4 flex overflow-hidden mb-6 rounded-sm bg-background border border-bordercolor">
+                    {% if stats.far_left_percent > 0 %}<div class="h-full bg-bias-farleft bias-bar transition-all duration-700 ease-out" style="width: 0%" data-width="{{ stats.far_left_percent }}%" title="Skrajna Lewica: {{ stats.far_left_percent }}%"></div>{% endif %}
+                    {% if stats.left_percent > 0 %}<div class="h-full bg-bias-left bias-bar transition-all duration-700 ease-out" style="width: 0%" data-width="{{ stats.left_percent }}%" title="Lewica: {{ stats.left_percent }}%"></div>{% endif %}
+                    {% if stats.lean_left_percent > 0 %}<div class="h-full bg-bias-leanleft bias-bar transition-all duration-700 ease-out" style="width: 0%" data-width="{{ stats.lean_left_percent }}%" title="Lekko Lewicowe: {{ stats.lean_left_percent }}%"></div>{% endif %}
+                    {% if stats.center_percent > 0 %}<div class="h-full bg-bias-center bias-bar transition-all duration-700 ease-out" style="width: 0%" data-width="{{ stats.center_percent }}%" title="Centrum: {{ stats.center_percent }}%"></div>{% endif %}
+                    {% if stats.lean_right_percent > 0 %}<div class="h-full bg-bias-leanright bias-bar transition-all duration-700 ease-out" style="width: 0%" data-width="{{ stats.lean_right_percent }}%" title="Lekko Prawicowe: {{ stats.lean_right_percent }}%"></div>{% endif %}
+                    {% if stats.right_percent > 0 %}<div class="h-full bg-bias-right bias-bar transition-all duration-700 ease-out" style="width: 0%" data-width="{{ stats.right_percent }}%" title="Prawica: {{ stats.right_percent }}%"></div>{% endif %}
+                    {% if stats.far_right_percent > 0 %}<div class="h-full bg-bias-farright bias-bar transition-all duration-700 ease-out" style="width: 0%" data-width="{{ stats.far_right_percent }}%" title="Skrajna Prawica: {{ stats.far_right_percent }}%"></div>{% endif %}
                 </div>
 
-                <!-- 7 PIONOWYCH STOSÓW (Pills dla 7 poziomów) -->
-                <div class="grid grid-cols-7 gap-1 mb-6 px-1">
+                <!-- GRUPOWANIE ARTYKUŁÓW PO WYDAWCY (7 Pionowych Kolumn) -->
+                {% regroup articles|dictsort:"publisher.name" by publisher as unique_publishers %}
 
+                <!-- Tło dla kolumn (styl tabeli/wykresu) -->
+                <div class="grid grid-cols-7 gap-px bg-bordercolor border border-bordercolor mb-6 rounded overflow-hidden">
+
+                    <!-- Funkcja pomocnicza powtarzana dla każdej z 7 kolumn -->
                     <!-- 1. Skrajna Lewica -->
-                    <div class="flex flex-col items-center">
-                        <div class="bg-red-950/30 border border-red-900/40 rounded-full w-full py-1.5 flex flex-col items-center -space-y-2.5">
-                            {% for article in articles %}
-                                {% if article.publisher.bias != None and article.publisher.bias <= 0.15 %}
-                                    <div title="{{ article.publisher.name }}" class="source-circle w-7 h-7 rounded-full bg-white flex items-center justify-center border-2 border-[#1c1c1c] shadow-sm relative overflow-hidden text-[9px] font-black text-black">
-                                        {% if article.publisher.logo %}<img src="{{ article.publisher.logo }}" class="w-full h-full object-cover">{% else %}{{ article.publisher.name|slice:":2" }}{% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            {% if stats.far_left_count == 0 %}<div class="w-5 h-5 rounded-full border border-dashed border-gray-700"></div>{% endif %}
+                    <div class="bg-[#111] py-3 flex flex-col items-center">
+                        <span class="text-[9px] font-bold text-bias-farleft mb-2">FL</span>
+                        <div class="flex flex-col items-center space-y-1">
+                            {% for group in unique_publishers %}{% with pub=group.grouper %}{% if pub.bias != None and pub.bias <= 0.15 %}
+                                <div title="{{ pub.name }} ({{ group.list|length }})" class="source-circle w-6 h-6 rounded bg-white flex items-center justify-center border border-gray-600 text-[8px] font-black text-black overflow-hidden">
+                                    {% if pub.logo %}<img src="{{ pub.logo }}" class="w-full h-full object-cover">{% else %}{{ pub.name|slice:":2" }}{% endif %}
+                                </div>
+                            {% endif %}{% endwith %}{% endfor %}
+                            {% if stats.far_left_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
 
                     <!-- 2. Lewica -->
-                    <div class="flex flex-col items-center">
-                        <div class="bg-red-900/20 border border-red-800/30 rounded-full w-full py-1.5 flex flex-col items-center -space-y-2.5">
-                            {% for article in articles %}
-                                {% if article.publisher.bias != None and article.publisher.bias > 0.15 and article.publisher.bias <= 0.30 %}
-                                    <div title="{{ article.publisher.name }}" class="source-circle w-7 h-7 rounded-full bg-white flex items-center justify-center border-2 border-[#1c1c1c] shadow-sm relative overflow-hidden text-[9px] font-black text-black">
-                                        {% if article.publisher.logo %}<img src="{{ article.publisher.logo }}" class="w-full h-full object-cover">{% else %}{{ article.publisher.name|slice:":2" }}{% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            {% if stats.left_count == 0 %}<div class="w-5 h-5 rounded-full border border-dashed border-gray-700"></div>{% endif %}
+                    <div class="bg-[#111] py-3 flex flex-col items-center">
+                        <span class="text-[9px] font-bold text-bias-left mb-2">L</span>
+                        <div class="flex flex-col items-center space-y-1">
+                            {% for group in unique_publishers %}{% with pub=group.grouper %}{% if pub.bias != None and pub.bias > 0.15 and pub.bias <= 0.30 %}
+                                <div title="{{ pub.name }} ({{ group.list|length }})" class="source-circle w-6 h-6 rounded bg-white flex items-center justify-center border border-gray-600 text-[8px] font-black text-black overflow-hidden">
+                                    {% if pub.logo %}<img src="{{ pub.logo }}" class="w-full h-full object-cover">{% else %}{{ pub.name|slice:":2" }}{% endif %}
+                                </div>
+                            {% endif %}{% endwith %}{% endfor %}
+                            {% if stats.left_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
 
                     <!-- 3. Lekko Lewicowe -->
-                    <div class="flex flex-col items-center">
-                        <div class="bg-red-500/10 border border-red-500/20 rounded-full w-full py-1.5 flex flex-col items-center -space-y-2.5">
-                            {% for article in articles %}
-                                {% if article.publisher.bias != None and article.publisher.bias > 0.30 and article.publisher.bias <= 0.45 %}
-                                    <div title="{{ article.publisher.name }}" class="source-circle w-7 h-7 rounded-full bg-white flex items-center justify-center border-2 border-[#1c1c1c] shadow-sm relative overflow-hidden text-[9px] font-black text-black">
-                                        {% if article.publisher.logo %}<img src="{{ article.publisher.logo }}" class="w-full h-full object-cover">{% else %}{{ article.publisher.name|slice:":2" }}{% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            {% if stats.lean_left_count == 0 %}<div class="w-5 h-5 rounded-full border border-dashed border-gray-700"></div>{% endif %}
+                    <div class="bg-[#111] py-3 flex flex-col items-center">
+                        <span class="text-[9px] font-bold text-bias-leanleft mb-2">LL</span>
+                        <div class="flex flex-col items-center space-y-1">
+                            {% for group in unique_publishers %}{% with pub=group.grouper %}{% if pub.bias != None and pub.bias > 0.30 and pub.bias <= 0.45 %}
+                                <div title="{{ pub.name }} ({{ group.list|length }})" class="source-circle w-6 h-6 rounded bg-white flex items-center justify-center border border-gray-600 text-[8px] font-black text-black overflow-hidden">
+                                    {% if pub.logo %}<img src="{{ pub.logo }}" class="w-full h-full object-cover">{% else %}{{ pub.name|slice:":2" }}{% endif %}
+                                </div>
+                            {% endif %}{% endwith %}{% endfor %}
+                            {% if stats.lean_left_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
 
                     <!-- 4. Centrum -->
-                    <div class="flex flex-col items-center">
-                        <div class="bg-gray-700/10 border border-gray-600/30 rounded-full w-full py-1.5 flex flex-col items-center -space-y-2.5">
-                            {% for article in articles %}
-                                {% if article.publisher.bias != None and article.publisher.bias > 0.45 and article.publisher.bias <= 0.55 %}
-                                    <div title="{{ article.publisher.name }}" class="source-circle w-7 h-7 rounded-full bg-white flex items-center justify-center border-2 border-[#1c1c1c] shadow-sm relative overflow-hidden text-[9px] font-black text-black">
-                                        {% if article.publisher.logo %}<img src="{{ article.publisher.logo }}" class="w-full h-full object-cover">{% else %}{{ article.publisher.name|slice:":2" }}{% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            {% if stats.center_count == 0 %}<div class="w-5 h-5 rounded-full border border-dashed border-gray-700"></div>{% endif %}
+                    <div class="bg-surface py-3 flex flex-col items-center">
+                        <span class="text-[9px] font-bold text-bias-center mb-2">C</span>
+                        <div class="flex flex-col items-center space-y-1">
+                            {% for group in unique_publishers %}{% with pub=group.grouper %}{% if pub.bias != None and pub.bias > 0.45 and pub.bias <= 0.55 %}
+                                <div title="{{ pub.name }} ({{ group.list|length }})" class="source-circle w-6 h-6 rounded bg-white flex items-center justify-center border border-gray-600 text-[8px] font-black text-black overflow-hidden">
+                                    {% if pub.logo %}<img src="{{ pub.logo }}" class="w-full h-full object-cover">{% else %}{{ pub.name|slice:":2" }}{% endif %}
+                                </div>
+                            {% endif %}{% endwith %}{% endfor %}
+                            {% if stats.center_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
 
                     <!-- 5. Lekko Prawicowe -->
-                    <div class="flex flex-col items-center">
-                        <div class="bg-blue-500/10 border border-blue-500/20 rounded-full w-full py-1.5 flex flex-col items-center -space-y-2.5">
-                            {% for article in articles %}
-                                {% if article.publisher.bias != None and article.publisher.bias > 0.55 and article.publisher.bias <= 0.70 %}
-                                    <div title="{{ article.publisher.name }}" class="source-circle w-7 h-7 rounded-full bg-white flex items-center justify-center border-2 border-[#1c1c1c] shadow-sm relative overflow-hidden text-[9px] font-black text-black">
-                                        {% if article.publisher.logo %}<img src="{{ article.publisher.logo }}" class="w-full h-full object-cover">{% else %}{{ article.publisher.name|slice:":2" }}{% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            {% if stats.lean_right_count == 0 %}<div class="w-5 h-5 rounded-full border border-dashed border-gray-700"></div>{% endif %}
+                    <div class="bg-[#111] py-3 flex flex-col items-center">
+                        <span class="text-[9px] font-bold text-bias-leanright mb-2">LR</span>
+                        <div class="flex flex-col items-center space-y-1">
+                            {% for group in unique_publishers %}{% with pub=group.grouper %}{% if pub.bias != None and pub.bias > 0.55 and pub.bias <= 0.70 %}
+                                <div title="{{ pub.name }} ({{ group.list|length }})" class="source-circle w-6 h-6 rounded bg-white flex items-center justify-center border border-gray-600 text-[8px] font-black text-black overflow-hidden">
+                                    {% if pub.logo %}<img src="{{ pub.logo }}" class="w-full h-full object-cover">{% else %}{{ pub.name|slice:":2" }}{% endif %}
+                                </div>
+                            {% endif %}{% endwith %}{% endfor %}
+                            {% if stats.lean_right_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
 
                     <!-- 6. Prawica -->
-                    <div class="flex flex-col items-center">
-                        <div class="bg-blue-900/20 border border-blue-800/30 rounded-full w-full py-1.5 flex flex-col items-center -space-y-2.5">
-                            {% for article in articles %}
-                                {% if article.publisher.bias != None and article.publisher.bias > 0.70 and article.publisher.bias <= 0.85 %}
-                                    <div title="{{ article.publisher.name }}" class="source-circle w-7 h-7 rounded-full bg-white flex items-center justify-center border-2 border-[#1c1c1c] shadow-sm relative overflow-hidden text-[9px] font-black text-black">
-                                        {% if article.publisher.logo %}<img src="{{ article.publisher.logo }}" class="w-full h-full object-cover">{% else %}{{ article.publisher.name|slice:":2" }}{% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            {% if stats.right_count == 0 %}<div class="w-5 h-5 rounded-full border border-dashed border-gray-700"></div>{% endif %}
+                    <div class="bg-[#111] py-3 flex flex-col items-center">
+                        <span class="text-[9px] font-bold text-bias-right mb-2">R</span>
+                        <div class="flex flex-col items-center space-y-1">
+                            {% for group in unique_publishers %}{% with pub=group.grouper %}{% if pub.bias != None and pub.bias > 0.70 and pub.bias <= 0.85 %}
+                                <div title="{{ pub.name }} ({{ group.list|length }})" class="source-circle w-6 h-6 rounded bg-white flex items-center justify-center border border-gray-600 text-[8px] font-black text-black overflow-hidden">
+                                    {% if pub.logo %}<img src="{{ pub.logo }}" class="w-full h-full object-cover">{% else %}{{ pub.name|slice:":2" }}{% endif %}
+                                </div>
+                            {% endif %}{% endwith %}{% endfor %}
+                            {% if stats.right_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
 
                     <!-- 7. Skrajna Prawica -->
-                    <div class="flex flex-col items-center">
-                        <div class="bg-blue-950/30 border border-blue-900/40 rounded-full w-full py-1.5 flex flex-col items-center -space-y-2.5">
-                            {% for article in articles %}
-                                {% if article.publisher.bias != None and article.publisher.bias > 0.85 %}
-                                    <div title="{{ article.publisher.name }}" class="source-circle w-7 h-7 rounded-full bg-white flex items-center justify-center border-2 border-[#1c1c1c] shadow-sm relative overflow-hidden text-[9px] font-black text-black">
-                                        {% if article.publisher.logo %}<img src="{{ article.publisher.logo }}" class="w-full h-full object-cover">{% else %}{{ article.publisher.name|slice:":2" }}{% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            {% if stats.far_right_count == 0 %}<div class="w-5 h-5 rounded-full border border-dashed border-gray-700"></div>{% endif %}
+                    <div class="bg-[#111] py-3 flex flex-col items-center">
+                        <span class="text-[9px] font-bold text-bias-farright mb-2">FR</span>
+                        <div class="flex flex-col items-center space-y-1">
+                            {% for group in unique_publishers %}{% with pub=group.grouper %}{% if pub.bias != None and pub.bias > 0.85 %}
+                                <div title="{{ pub.name }} ({{ group.list|length }})" class="source-circle w-6 h-6 rounded bg-white flex items-center justify-center border border-gray-600 text-[8px] font-black text-black overflow-hidden">
+                                    {% if pub.logo %}<img src="{{ pub.logo }}" class="w-full h-full object-cover">{% else %}{{ pub.name|slice:":2" }}{% endif %}
+                                </div>
+                            {% endif %}{% endwith %}{% endfor %}
+                            {% if stats.far_right_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
 
                 </div>
 
-                <!-- Martwe Pole -->
+                <!-- Alert: Martwe Pole (Czysty, profesjonalny panel) -->
                 {% if blind_spot_msg %}
-                <div class="mt-6 pt-4 border-t border-[#2a2a2a]">
-                    <div class="flex items-start gap-2">
-                        <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div class="bg-red-950/20 border-l-4 border-bias-left p-4 rounded text-sm mt-4">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-bias-left shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <div>
-                            <h4 class="text-xs font-bold text-gray-200 uppercase tracking-wide">Wykryto Martwe Pole</h4>
-                            <p class="text-xs text-gray-400 mt-1 leading-relaxed">{{ blind_spot_msg }}</p>
+                            <strong class="text-white block mb-1">Uwaga: Wykryto Martwe Pole</strong>
+                            <p class="text-gray-400 text-xs leading-relaxed">{{ blind_spot_msg }}</p>
                         </div>
                     </div>
                 </div>
@@ -264,11 +321,27 @@
         </aside>
     </main>
 
-    <footer class="border-t border-[#2a2a2a] mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-left">
-            <p class="text-xs text-[#9ca3af]">&copy; 2024 Horyzont AI. Pełen obraz informacji.</p>
+    <footer class="bg-background border-t border-bordercolor mt-auto">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-sm font-bold text-white tracking-wide uppercase">Horyzont</div>
+            <p class="text-xs text-gray-500">&copy; 2024 Horyzont Analytics. Wszystkie prawa zastrzeżone.</p>
         </div>
     </footer>
 
+    <!-- Skrypt animujący paski rozkładu -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animacja ładowania paska (w stylu wczytywania danych)
+            setTimeout(() => {
+                const biasBars = document.querySelectorAll('.bias-bar');
+                biasBars.forEach(bar => {
+                    const targetWidth = bar.getAttribute('data-width');
+                    if (targetWidth) {
+                        bar.style.width = targetWidth;
+                    }
+                });
+            }, 300);
+        });
+    </script>
 </body>
 </html>
