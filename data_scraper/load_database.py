@@ -109,16 +109,20 @@ def populate_cluster_titles():
     """
     result = []
     with db_manager.get_db_connection() as cur:
-
         cur.execute(find_clusters_missing_titles)
         result = cur.fetchall()
 
-
     values_to_update = []
-    for i in range(len(result)):
-        response_ai = llm_news.generate_title(result[i][1])
-        values_to_update.append((result[i][0], response_ai))
-        print(response_ai, result[i][0])
+
+    for cluster_id, cluster_content, _ in result:
+        response_ai = llm_news.generate_title(cluster_content)
+        values_to_update.append((response_ai, cluster_id))
+
+    update_clusters_query = "UPDATE clusters SET title = %s WHERE id = %s;"
+
+    with db_manager.get_db_connection() as cur:
+        cur.executemany(update_clusters_query, values_to_update)
+
 
 def seed_publishers():
     publishers_data = [
@@ -418,6 +422,6 @@ def run_pipeline():
     print("\n✅ Koniec procesu. System wykonał pełen cykl.")
 
 
-run_pipeline()
+# run_pipeline()
 
-# populate_cluster_titles()
+populate_cluster_titles()
