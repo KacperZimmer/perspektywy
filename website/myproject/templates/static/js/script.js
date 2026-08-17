@@ -93,4 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setInterval(pushNewArticle, 4000);
     }
+
 });
+
+
