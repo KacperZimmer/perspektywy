@@ -52,12 +52,14 @@ def generate_missing_summaries_for_large_clusters():
 
 
             find_clusters_query = """
-                SELECT c.id 
-                FROM clusters c
-                JOIN embedded_articles e ON c.id = e.cluster_id
-                WHERE c.ai_summary IS NULL
-                GROUP BY c.id
-                HAVING COUNT(e.id) >= 5;
+           SELECT 
+            c.id AS cluster_id,
+            json_agg(e.article_description) AS descriptions
+            FROM clusters c
+            JOIN embedded_articles e ON c.id = e.cluster_id
+            WHERE c.ai_summary IS NULL
+            GROUP BY c.id
+            HAVING COUNT(e.id) >= 5;
             """
             cur.execute(find_clusters_query)
             clusters_to_process = cur.fetchall()
