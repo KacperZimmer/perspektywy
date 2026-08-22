@@ -47,6 +47,7 @@ class ManageConnection:
 db_manager = ManageConnection(host='localhost', database='kontekst_db', user='newuser', password='password')
 
 def generate_missing_summaries_for_large_clusters():
+        in_memory_clusters = []
 
         with db_manager.get_db_connection() as cur:
 
@@ -70,35 +71,26 @@ def generate_missing_summaries_for_large_clusters():
 
             print(f"\n🔍 Znaleziono {len(clusters_to_process)} klastrów do podsumowania przez AI.")
 
-            for cluster_row in clusters_to_process:
-                cluster_id = cluster_row[0]
+            in_memory_clusters = clusters_to_process
 
-                cur.execute(
-                    'SELECT article_description FROM embedded_articles WHERE cluster_id = %s AND article_description IS NOT NULL',
-                    (cluster_id,)
-                )
+        values_to_update = []
 
-                descriptions_result = cur.fetchall()
-                descriptions = [row[0] for row in descriptions_result if str(row[0]).strip()]
+        for cluster_id, content in in_memory_clusters:
+            ai_summary = llm_news.generate_summary(content)
+            values_to_update.append((ai_summary, cluster_id))
+            print(ai_summary)
+        query = "UPDATE clusters SET ai_summary =%s where id=%s"
 
-                if not descriptions:
-                    print(f"⚠️ Klaster {cluster_id} nie ma żadnych sensownych opisów. Pomijam.")
-                    continue
+        with db_manager.get_db_connection() as cur:
+            cur.executemany(query, values_to_update)
 
-                print(f"⏳ Generuję podsumowanie dla klastra ID: {cluster_id}...")
 
-                ai_response = llm_news.generate_summary(descriptions)
 
-                summary_text = ai_response.get('response', '') if isinstance(ai_response, dict) else ai_response
 
-                update_query = "UPDATE clusters SET ai_summary = %s WHERE id = %s"
-                cur.execute(update_query, (summary_text, cluster_id))
 
-                print(f"✅ Podsumowanie dla klastra {cluster_id} pomyślnie zapisane.")
 
 def populate_cluster_titles():
 
-    clusters = []
     find_clusters_missing_titles = """
         SELECT c.id,                                                                                                                                                                                                   
          array_agg(a.article_description ORDER BY a.id) as article_descriptions,                                                                                                                                 
@@ -426,4 +418,6 @@ def run_pipeline():
 
 # run_pipeline()
 
-populate_cluster_titles()
+# populate_cluster_titles()
+
+generate_missing_summaries_for_large_clusters()
