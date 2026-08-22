@@ -1,5 +1,6 @@
 
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 class Publisher(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -16,6 +17,12 @@ class Clusters(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
     title = models.TextField(max_length=50, null=True, blank=True)
     ai_summary = models.TextField(max_length=500, null=True)
+    tags = ArrayField(
+        models.CharField(max_length=50),
+        blank=True,
+        default=list
+    )
+
 
     class Meta:
         db_table = 'clusters'
