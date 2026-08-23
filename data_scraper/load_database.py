@@ -4,7 +4,6 @@ import feedparser
 import numpy as np
 import psycopg2
 import requests
-import re
 
 from analytics_engine.create_embeddings import (
     prepare_texts_for_embedding,
@@ -46,22 +45,78 @@ class ManageConnection:
                 conn.close()
 db_manager = ManageConnection(host='localhost', database='kontekst_db', user='newuser', password='password')
 
+import json
+import re
+
+
+def generate_tags_for_clusters():
+    values_to_update = []
+
+    find_clusters_query = """
+        SELECT 
+            c.id, 
+            c.ai_summary 
+        FROM clusters c
+        JOIN embedded_articles e ON c.id = e.cluster_id
+        WHERE (c.tags IS NULL OR cardinality(c.tags) = 0 OR c.tags = '{}')
+          AND c.ai_summary IS NOT NULL
+        GROUP BY c.id, c.ai_summary
+        HAVING COUNT(e.id) >= 5;
+    """
+
+    with db_manager.get_db_connection() as cur:
+        cur.execute(find_clusters_query)
+        in_memory_clusters = cur.fetchall()
+
+    if not in_memory_clusters:
+        print("🟢 Brak klastrów wymagających otagowania.")
+        return
+
+    for cluster_id, content in in_memory_clusters:
+        raw_tags = llm_news.tag_cluster(content)
+
+        tags_list = []
+        if isinstance(raw_tags, list):
+            tags_list = raw_tags
+        elif isinstance(raw_tags, str):
+            match = re.search(r'\[.*?\]', raw_tags, re.DOTALL)
+            json_str = match.group(0) if match else raw_tags.strip()
+
+            try:
+                parsed = json.loads(json_str)
+                if isinstance(parsed, list):
+                    tags_list = parsed
+            except json.JSONDecodeError:
+                print(f"⚠️ Nie udało się sparsować tagów dla klastra {cluster_id}: {raw_tags}")
+                continue
+
+        clean_tags = [str(tag).strip() for tag in tags_list if tag]
+
+        if clean_tags:
+            print(f"Klaster {cluster_id}: {clean_tags}")
+            values_to_update.append((clean_tags, cluster_id))
+
+    if values_to_update:
+        with db_manager.get_db_connection() as cur:
+            cur.executemany("UPDATE clusters SET tags = %s WHERE id = %s;", values_to_update)
+            print(f"✅ Pomyślnie zaktualizowano tagi dla {len(values_to_update)} klastrów.")
+
 def generate_missing_summaries_for_large_clusters():
         in_memory_clusters = []
-
+        find_clusters_query = """
+                SELECT 
+                 c.id AS cluster_id,
+                 json_agg(e.article_description) AS descriptions
+                 FROM clusters c
+                 JOIN embedded_articles e ON c.id = e.cluster_id
+                 WHERE c.ai_summary IS NULL
+                 GROUP BY c.id
+                 HAVING COUNT(e.id) >= 5;
+                 """
         with db_manager.get_db_connection() as cur:
 
 
-            find_clusters_query = """
-           SELECT 
-            c.id AS cluster_id,
-            json_agg(e.article_description) AS descriptions
-            FROM clusters c
-            JOIN embedded_articles e ON c.id = e.cluster_id
-            WHERE c.ai_summary IS NULL
-            GROUP BY c.id
-            HAVING COUNT(e.id) >= 5;
-            """
+
             cur.execute(find_clusters_query)
             clusters_to_process = cur.fetchall()
 
@@ -404,7 +459,7 @@ def run_pipeline():
     print(" 🚀 START DATA PIPELINE: HORYZONT NEWS SYSTEM")
     print("==================================================")
 
-    print("\n[ETAP 1] Pobieranie artykułów i aktualizacja klastrów...")
+    print("\n[ETAP 1] Pobieranie artykułów i aktuaxlizacja klastrów...")
     agg_news_artictles(SOURCES, 20)
 
     print("\n[ETAP 2] Uruchamianie agentów AI do analizy i tworzenia podsumowań...")
@@ -420,4 +475,5 @@ def run_pipeline():
 
 # populate_cluster_titles()
 
-generate_missing_summaries_for_large_clusters()
+# generate_missing_summaries_for_large_clusters()
+generate_tags_for_clusters()

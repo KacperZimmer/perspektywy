@@ -76,6 +76,8 @@ def view_event(request, id):
     cluster = get_object_or_404(Clusters, id=id)
     articles = cluster.embeddedarticles_set.select_related('publisher').all()
 
+    print(cluster.tags)
+
     stats = get_bias_statistics(articles, articles.count())
 
     blind_spot_msg = None
@@ -90,7 +92,7 @@ def view_event(request, id):
     context = {
         "cluster": cluster,
         "articles": articles,
-        "stats": stats,  # Przekazujemy od razu cały słownik!
+        "stats": stats,
         "blind_spot_msg": blind_spot_msg
     }
 
