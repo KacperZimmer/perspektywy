@@ -20,7 +20,8 @@ class Clusters(models.Model):
     tags = ArrayField(
         models.CharField(max_length=50),
         blank=True,
-        default=list
+        default=list,
+        null=True
     )
 
 

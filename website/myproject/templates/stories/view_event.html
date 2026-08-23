@@ -23,13 +23,13 @@
                         surface: '#171717',
                         bordercolor: '#2d2d2d',
                         bias: {
-                            farleft: '#991b1b',   /* Red 800 */
-                            left: '#dc2626',      /* Red 600 */
-                            leanleft: '#f87171',  /* Red 400 */
-                            center: '#9ca3af',    /* Gray 400 */
-                            leanright: '#60a5fa', /* Blue 400 */
-                            right: '#2563eb',     /* Blue 600 */
-                            farright: '#1e3a8a'   /* Blue 900 */
+                            farleft: '#991b1b',
+                            left: '#dc2626',
+                            leanleft: '#f87171',
+                            center: '#9ca3af',
+                            leanright: '#60a5fa',
+                            right: '#2563eb',
+                            farright: '#1e3a8a'
                         }
                     }
                 }
@@ -38,7 +38,6 @@
     </script>
 
     <style>
-        /* Subtelny efekt podniesienia kropki, bez przesadzonych animacji */
         .source-circle {
             transition: all 0.2s ease-in-out;
         }
@@ -51,7 +50,7 @@
 </head>
 <body class="font-sans antialiased text-gray-300 bg-background min-h-screen flex flex-col selection:bg-gray-700">
 
-    <!-- Cienki pasek spektrum na samej górze (statyczny, czysty) -->
+    <!-- Cienki pasek spektrum -->
     <div class="flex h-1 w-full fixed top-0 z-50">
         <div class="w-[14.28%] bg-bias-farleft"></div>
         <div class="w-[14.28%] bg-bias-left"></div>
@@ -62,18 +61,14 @@
         <div class="w-[14.28%] bg-bias-farright"></div>
     </div>
 
-    <!-- Płaski, tradycyjny Navbar informacyjny (zgodny ze stroną główną) -->
+    <!-- Navbar -->
     <header class="bg-background border-b border-bordercolor sticky top-1 z-40">
         <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex justify-between items-center">
-
             <div class="flex items-center gap-8">
-                <!-- Logo -->
                 <a href="{% url 'index' %}" class="text-xl font-extrabold tracking-tight text-white uppercase flex items-center gap-2">
                     Horyzont
                     <span class="bg-gray-800 text-gray-400 text-[9px] px-1.5 py-0.5 rounded border border-gray-700">BETA</span>
                 </a>
-
-                <!-- Kategoriowe Menu (Klasyczne) -->
                 <nav class="hidden md:flex items-center gap-5 text-sm font-medium">
                     <a href="{% url 'index' %}" class="text-white border-b-2 border-white py-4">Wydarzenia</a>
                     <a href="#" class="text-gray-400 hover:text-white py-4 transition-colors">Analizy AI</a>
@@ -81,8 +76,6 @@
                     <a href="#" class="text-gray-400 hover:text-white py-4 transition-colors">Zapisane</a>
                 </nav>
             </div>
-
-            <!-- Narzędzia profilowe -->
             <div class="flex items-center gap-4 text-sm">
                 <a href="{% url 'index' %}" class="text-xs font-semibold text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 border border-bordercolor px-2 py-1 rounded">
                     &larr; Wróć
@@ -100,7 +93,7 @@
 
     <main class="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
 
-        <!-- LEWA KOLUMNA: Tytuł, Podsumowanie, Lista -->
+        <!-- LEWA KOLUMNA: Tytuł, Podsumowanie, Lista, Tagi -->
         <div class="lg:col-span-8 flex flex-col">
 
             <!-- Nagłówek wydarzenia -->
@@ -114,7 +107,7 @@
                     {{ cluster.title|default:"Brak ustalonego tytułu w bazie" }}
                 </h1>
 
-                <!-- Raport AI - Zamiast gradientów, wygląd profesjonalnego "Executive Brief" -->
+                <!-- Raport AI -->
                 <div class="bg-surface border border-bordercolor rounded p-6 sm:p-8">
                     <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -138,12 +131,10 @@
                     <span class="text-xs font-semibold text-gray-400 bg-surface border border-bordercolor px-2 py-1 rounded">Łącznie relacji: {{ stats.total }}</span>
                 </div>
 
-                <!-- Lista (Gęsty układ tabelaryczny) -->
                 <div class="border-t border-bordercolor">
                     {% for article in articles %}
                     <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="group flex flex-col sm:flex-row sm:items-center py-4 border-b border-bordercolor hover:bg-surface transition-colors px-2 -mx-2 rounded">
-
-                        <!-- Źródło i Bias (Lewa strona na desktopie) -->
+                        <!-- Źródło i Bias -->
                         <div class="sm:w-1/4 shrink-0 flex items-center gap-2 mb-2 sm:mb-0">
                             {% if article.publisher.bias != None %}
                                 {% with b=article.publisher.bias %}
@@ -164,7 +155,7 @@
                             </span>
                         </div>
 
-                        <!-- Tytuł (Środek i prawa strona) -->
+                        <!-- Tytuł -->
                         <div class="sm:w-3/4 flex justify-between items-center pr-2">
                             <h4 class="text-[15px] font-medium text-gray-200 group-hover:text-blue-400 transition-colors leading-snug line-clamp-2">
                                 {{ article.title }}
@@ -179,6 +170,28 @@
                     {% endfor %}
                 </div>
             </div>
+
+            <!-- ============================================== -->
+            <!-- NOWA SEKCJA TAGÓW (DODANA NA DOLE ARTYKUŁÓW)   -->
+            <!-- ============================================== -->
+            {% if tags %}
+            <div class="mt-8 pt-8">
+                <h3 class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                    Powiązane tagi tematyczne
+                </h3>
+                <div class="flex flex-wrap gap-2.5">
+                    {% for tag in tags %}
+                    <!-- Przykładowy link - podmień href na np. stronę filtrowania po danym tagu -->
+                    <a href="#" class="px-3.5 py-1.5 bg-surface border border-bordercolor rounded-full text-xs font-medium text-gray-400 hover:text-white hover:border-gray-500 hover:bg-gray-800 transition-all duration-200 flex items-center gap-1 group shadow-sm">
+                        <span class="text-gray-600 group-hover:text-gray-400 transition-colors">#</span>
+                        {{ tag.name|default:tag }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            <!-- ============================================== -->
 
         </div>
 
@@ -206,10 +219,8 @@
                 <!-- GRUPOWANIE ARTYKUŁÓW PO WYDAWCY (7 Pionowych Kolumn) -->
                 {% regroup articles|dictsort:"publisher.name" by publisher as unique_publishers %}
 
-                <!-- Tło dla kolumn (styl tabeli/wykresu) -->
+                <!-- Tło dla kolumn -->
                 <div class="grid grid-cols-7 gap-px bg-bordercolor border border-bordercolor mb-6 rounded overflow-hidden">
-
-                    <!-- Funkcja pomocnicza powtarzana dla każdej z 7 kolumn -->
                     <!-- 1. Skrajna Lewica -->
                     <div class="bg-[#111] py-3 flex flex-col items-center">
                         <span class="text-[9px] font-bold text-bias-farleft mb-2">FL</span>
@@ -300,10 +311,9 @@
                             {% if stats.far_right_count == 0 %}<div class="w-1 h-1 rounded-full bg-gray-700 mt-2"></div>{% endif %}
                         </div>
                     </div>
-
                 </div>
 
-                <!-- Alert: Martwe Pole (Czysty, profesjonalny panel) -->
+                <!-- Alert: Martwe Pole -->
                 {% if blind_spot_msg %}
                 <div class="bg-red-950/20 border-l-4 border-bias-left p-4 rounded text-sm mt-4">
                     <div class="flex items-start gap-3">
@@ -331,7 +341,6 @@
     <!-- Skrypt animujący paski rozkładu -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Animacja ładowania paska (w stylu wczytywania danych)
             setTimeout(() => {
                 const biasBars = document.querySelectorAll('.bias-bar');
                 biasBars.forEach(bar => {

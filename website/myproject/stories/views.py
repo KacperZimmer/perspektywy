@@ -76,7 +76,7 @@ def view_event(request, id):
     cluster = get_object_or_404(Clusters, id=id)
     articles = cluster.embeddedarticles_set.select_related('publisher').all()
 
-    print(cluster.tags)
+    tags = cluster.tags
 
     stats = get_bias_statistics(articles, articles.count())
 
@@ -90,6 +90,7 @@ def view_event(request, id):
             blind_spot_msg = "Temat ten silnie polaryzuje. Piszą o nim media skrajne z obu stron, podczas gdy media centrowe głównego nurtu w ogóle go nie poruszają."
 
     context = {
+        "tags" : tags,
         "cluster": cluster,
         "articles": articles,
         "stats": stats,

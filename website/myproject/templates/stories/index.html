@@ -10,7 +10,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Konfiguracja Tailwind dla własnych animacji -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -19,9 +18,12 @@
                     fontFamily: {
                         sans: ['"Inter"', 'sans-serif'],
                     },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'ping-slow': 'ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite',
+                    colors: {
+                        bias: {
+                            left: '#e11d48',   // Rose 600
+                            center: '#94a3b8', // Slate 400
+                            right: '#2563eb',  // Blue 600
+                        }
                     }
                 }
             }
@@ -29,306 +31,242 @@
     </script>
 
     <style>
-        /* Ukrycie kart przed animacją scrolla */
         .reveal-on-scroll {
             opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(15px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .reveal-on-scroll.is-visible {
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* Subtelny pattern dla "Martwego Pola" */
+        .pattern-diagonal {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.02) 10px, rgba(255,255,255,0.02) 20px);
+        }
     </style>
 </head>
-<body class="font-sans antialiased text-[#e5e5e5] bg-[#121212] min-h-screen flex flex-col selection:bg-gray-700 overflow-x-hidden">
+<body class="font-sans antialiased text-zinc-300 bg-zinc-950 min-h-screen flex flex-col selection:bg-zinc-700 overflow-x-hidden">
 
-    <!-- 7-stopniowy, pulsujący pasek na samej górze -->
-    <div class="flex h-1 w-full fixed top-0 z-50 opacity-90 relative overflow-hidden group">
-        <!-- Jasny refleks biegający po pasku -->
-        <div class="absolute inset-0 w-1/4 h-full bg-white/40 blur-sm -translate-x-full group-hover:animate-[slide_2s_ease-in-out_infinite] skew-x-12 z-10 transition-all"></div>
-        <div class="w-[14.28%] bg-[#b91c1c]"></div>
-        <div class="w-[14.28%] bg-[#ef4444]"></div>
-        <div class="w-[14.28%] bg-[#f87171]"></div>
-        <div class="w-[14.28%] bg-[#d1d5db]"></div>
-        <div class="w-[14.28%] bg-[#93c5fd]"></div>
-        <div class="w-[14.28%] bg-[#3b82f6]"></div>
-        <div class="w-[14.28%] bg-[#1d4ed8]"></div>
-    </div>
+    <!-- Pasek spektrum politycznego na samej górze -->
+    <div class="h-1 w-full fixed top-0 z-50 bg-gradient-to-r from-bias-left via-bias-center to-bias-right opacity-90"></div>
 
-    <!-- ZMODERNIZOWANY HEADER Z NAWIGACJĄ I KONTEM -->
-    <header class="bg-[#121212]/80 backdrop-blur-xl border-b border-[#2a2a2a] sticky top-1 z-40 shadow-2xl">
+    <!-- HEADER -->
+    <header class="bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 sticky top-1 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
 
-            <!-- LEWA STRONA: Logo, Beta Badge i Główne Menu -->
+            <!-- LEWA STRONA -->
             <div class="flex items-center gap-8">
-                <!-- Logo -->
                 <div class="flex items-center gap-3 group cursor-pointer">
-                    <a href="#" class="text-xl font-extrabold tracking-tight text-white group-hover:text-blue-400 transition-colors">HORYZONT</a>
-                    <span class="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#2a2a2a] bg-[#222] text-gray-300 text-[10px] font-bold uppercase tracking-wider relative overflow-hidden">
-                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                    <a href="#" class="text-xl font-extrabold tracking-tight text-zinc-100 group-hover:text-white transition-colors">HORYZONT</a>
+                    <span class="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 text-[10px] font-bold uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         Live
                     </span>
                 </div>
-
-                <!-- Linki Nawigacyjne (Widoczne na desktopie) -->
-                <nav class="hidden md:flex items-center gap-1">
-                    <a href="#" class="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm font-semibold transition-colors">Wydarzenia</a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">Analizy AI</a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">Moje Źródła</a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">Zapisane</a>
+                <nav class="hidden md:flex items-center gap-2">
+                    <a href="#" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-100 text-sm font-semibold transition-colors">Wydarzenia</a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 text-sm font-medium transition-colors">Analizy AI</a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 text-sm font-medium transition-colors">Moje Źródła</a>
                 </nav>
             </div>
 
-            <!-- PRAWA STRONA: Zegarek, Ikony akcji, Profil -->
+            <!-- PRAWA STRONA -->
             <div class="flex items-center gap-3 sm:gap-5">
-
-                <!-- Zegar (ukryty na małych ekranach by zaoszczędzić miejsce) -->
-                <div class="hidden lg:flex text-[11px] font-semibold text-[#6b7280] items-center gap-1.5 pr-4 border-r border-[#2a2a2a]">
-                    <svg class="w-3.5 h-3.5 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="hidden lg:flex text-xs font-medium text-zinc-500 items-center gap-1.5 pr-4 border-r border-zinc-800">
                     <span id="current-date"></span>
                 </div>
-
-                <!-- Narzędzia: Szukaj i Powiadomienia -->
-                <div class="flex items-center gap-2">
-                    <button class="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/5" title="Szukaj tematu">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <div class="flex items-center gap-1">
+                    <button class="p-2 text-zinc-400 hover:text-zinc-100 transition-colors rounded-full hover:bg-zinc-800" title="Szukaj tematu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </button>
-
-                    <button class="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/5 relative" title="Powiadomienia">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                        <!-- Kropka powiadomienia -->
-                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-[#121212]"></span>
+                    <button class="p-2 text-zinc-400 hover:text-zinc-100 transition-colors rounded-full hover:bg-zinc-800 relative" title="Powiadomienia">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border border-zinc-950"></span>
                     </button>
                 </div>
-
-                <!-- Profil Użytkownika -->
-                <div class="pl-2 sm:pl-5 border-l border-[#2a2a2a]">
-                    <button class="flex items-center gap-3 group text-left">
-                        <!-- Placeholder na awatar (SVG) -->
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 p-[2px] shadow-lg group-hover:scale-105 transition-transform">
-                            <div class="w-full h-full bg-[#1c1c1c] rounded-full flex items-center justify-center overflow-hidden">
-                                <svg class="w-5 h-5 text-gray-300 mt-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                            </div>
+                <div class="pl-2 sm:pl-4 border-l border-zinc-800">
+                    <button class="flex items-center gap-2 group text-left">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden group-hover:border-zinc-500 transition-colors">
+                            <svg class="w-4 h-4 text-zinc-400 mt-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                         </div>
-
-                        <!-- Opis profilu (ukryty na komórkach) -->
                         <div class="hidden sm:block">
-                            <p class="text-xs font-bold text-gray-200 group-hover:text-white transition-colors leading-tight">Marek K.</p>
-                            <p class="text-[9px] font-bold text-purple-400 uppercase tracking-wide">Konto Premium</p>
+                            <p class="text-xs font-semibold text-zinc-300 group-hover:text-white transition-colors">Marek K.</p>
+                            <p class="text-[10px] text-zinc-500">Premium</p>
                         </div>
-
-                        <!-- Strzałka rozwijania -->
-                        <svg class="w-4 h-4 text-gray-500 group-hover:text-white transition-colors hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                 </div>
-
-                <!-- Przycisk menu mobilnego (Hamburger) widoczny tylko na małych ekranach -->
-                <button class="md:hidden p-2 text-gray-400 hover:text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                <button class="md:hidden p-2 text-zinc-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
-
             </div>
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 relative">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
 
-        <!-- Światło w tle (Ambient Glow) -->
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-900/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+        <!-- GŁÓWNA KOLUMNA -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
 
-        <!-- Główna kolumna z newsami -->
-        <div class="md:col-span-8 flex flex-col gap-6">
-
-            <div class="mb-4 reveal-on-scroll">
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">Przegląd Prasy</h1>
-                <p class="text-gray-400">Kluczowe wydarzenia z różnych stron dyskursu publicznego.</p>
+            <div class="mb-2 reveal-on-scroll">
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100 mb-1.5">Top Wydarzenia</h1>
+                <p class="text-zinc-400 text-sm">Zestawienie narracji z różnych stron dyskursu publicznego.</p>
             </div>
 
-            <!-- KONTENER NA ARTYKUŁY (Wymagany do Infinite Scrolla) -->
-            <div id="articles-container" class="flex flex-col gap-6">
+            <!-- KONTENER NA ARTYKUŁY -->
+            <div id="articles-container" class="flex flex-col gap-5">
                 {% for cluster_data in page_obj %}
-                    <!-- Karta wydarzenia z efektem Hover Glow -->
-                    <article class="reveal-on-scroll relative bg-[#1c1c1c] rounded-xl border border-[#2a2a2a] hover:border-gray-600 transition-all duration-300 flex flex-col sm:flex-row shadow-lg overflow-hidden group">
+                    <!-- KARTA ARTYKUŁU -->
+                    <article class="reveal-on-scroll group bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700/80 rounded-xl overflow-hidden flex flex-col sm:flex-row transition-all duration-300 shadow-sm hover:shadow-md">
 
-                        <!-- Hover poświata pod kartą -->
-                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-
-                        <!-- MIEJSCE NA ZDJĘCIE Z PRZYBLIŻENIEM -->
-                        <div class="sm:w-2/5 shrink-0 relative bg-[#2a2a2a] min-h-[180px] sm:min-h-full border-b sm:border-b-0 sm:border-r border-[#2a2a2a] overflow-hidden">
-                            {% if cluster_data.image_url %}
-                                <img src="{{ cluster_data.image_url }}" alt="Miniatura wydarzenia" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out">
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#1c1c1c]/80 to-transparent sm:bg-gradient-to-r"></div>
-                            {% else %}
-                                <div class="absolute inset-0 flex items-center justify-center text-gray-600 bg-[#161616] group-hover:bg-[#1a1a1a] transition-colors duration-500">
-                                    <svg class="w-10 h-10 opacity-50 transform group-hover:rotate-6 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                </div>
-                            {% endif %}
+                        <!-- ZDJĘCIE GENEROWANE AUTOMATYCZNIE PRZEZ API (Picsum) -->
+                        <div class="sm:w-[35%] shrink-0 relative bg-zinc-950 min-h-[160px] sm:min-h-full border-b sm:border-b-0 sm:border-r border-zinc-800 overflow-hidden">
+                            <!-- Losuje zdjęcie z serwera Picsum. Jako "seed" używamy ID klastra (lub licznika pętli), żeby obrazek nie skakał przy odświeżeniu -->
+                            <img src="https://picsum.photos/seed/{{ cluster_data.cluster_id|default:forloop.counter }}/600/400"
+                                 alt="Miniatura wydarzenia"
+                                 class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-90 group-hover:opacity-100">
                         </div>
 
-                        <!-- TREŚĆ KARTY -->
-                        <div class="p-5 sm:p-6 flex flex-col flex-grow relative z-10">
-                            <div class="flex items-center gap-3 mb-2">
-                                <!-- Tag AI -->
-                                <span class="inline-flex items-center gap-1 shrink-0 rounded border border-purple-900/50 bg-purple-900/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-300">
-                                    <svg class="w-3 h-3 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Analiza AI
+                        <!-- TREŚĆ -->
+                        <div class="p-5 sm:p-6 flex flex-col flex-grow">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    {{ cluster_data.articles|length }} Źródeł
                                 </span>
-                                <span class="text-[10px] font-semibold text-gray-500 flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                    {{ cluster_data.articles|length }} źródeł
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide text-zinc-400 bg-zinc-800 border border-zinc-700">
+                                    AI Summary
                                 </span>
                             </div>
 
-                            <!-- Tytuł AI -->
-                            <a href="{% url 'view_event' cluster_data.cluster_id %}" class="block mb-4">
-                               <h2 class="text-xl sm:text-2xl font-bold leading-snug text-gray-200 group-hover:text-white transition-colors line-clamp-3">
+                            <a href="{% url 'view_event' cluster_data.cluster_id %}" class="block mb-6">
+                               <h2 class="text-xl font-bold leading-snug text-zinc-100 group-hover:text-blue-400 transition-colors line-clamp-2">
                                    {{ cluster_data.cluster_ai_title|default:cluster_data.articles.0.title }}
                                </h2>
                             </a>
 
-                            <!-- DYNAMICZNY PASEK ROZKŁADU Z ANIMACJĄ JS -->
-                            <div class="mt-auto pt-2 pb-4">
-                                <div class="flex justify-between text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1.5">
-                                    <span>L</span>
-                                    <span>Rozkład narracji</span>
-                                    <span>P</span>
+                            <!-- DATA WIZUALIZACJA: Bias Bar -->
+                            <div class="mt-auto pt-2 border-t border-zinc-800/50">
+                                <div class="flex justify-between text-[10px] uppercase font-bold text-zinc-500 mb-2">
+                                    <span>Lewica</span>
+                                    <span>Centrum</span>
+                                    <span>Prawica</span>
                                 </div>
-                                <div class="h-1.5 w-full bg-[#2a2a2a] rounded-full flex overflow-hidden shadow-inner bias-bar-container">
-                                    <div class="bg-red-500 h-full transition-all duration-1500 ease-out bias-segment" style="width: 0%" data-target-width="{{ cluster_data.left_percent|default:0 }}%"></div>
-                                    <div class="bg-gray-400 h-full transition-all duration-1500 ease-out bias-segment" style="width: 0%" data-target-width="{{ cluster_data.center_percent|default:0 }}%"></div>
-                                    <div class="bg-blue-500 h-full transition-all duration-1500 ease-out bias-segment" style="width: 0%" data-target-width="{{ cluster_data.right_percent|default:0 }}%"></div>
+                                <div class="h-2 w-full bg-zinc-800 rounded-full flex overflow-hidden">
+                                    <div class="bg-bias-left h-full transition-all duration-1000 ease-out bias-segment" style="width: 0%" data-target-width="{{ cluster_data.left_percent|default:0 }}%"></div>
+                                    <div class="bg-bias-center h-full transition-all duration-1000 ease-out bias-segment" style="width: 0%" data-target-width="{{ cluster_data.center_percent|default:0 }}%"></div>
+                                    <div class="bg-bias-right h-full transition-all duration-1000 ease-out bias-segment" style="width: 0%" data-target-width="{{ cluster_data.right_percent|default:0 }}%"></div>
                                 </div>
-                            </div>
-
-                            <!-- CTA -->
-                            <div class="flex justify-end items-center mt-2">
-                                <a href="{% url 'view_event' cluster_data.cluster_id %}" class="inline-flex items-center justify-center gap-2 px-5 py-2 w-full sm:w-auto bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 hover:border-white text-sm font-bold rounded transition-all duration-300 shadow-sm group/btn">
-                                    Przeczytaj
-                                    <svg class="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                                </a>
                             </div>
                         </div>
                     </article>
                 {% empty %}
-                    <div class="bg-[#1c1c1c] rounded-xl p-12 text-center border border-[#2a2a2a] shadow-sm reveal-on-scroll">
-                        <p class="text-lg text-gray-500 font-medium">Obecnie brak dużych wydarzeń o zasięgu ogólnopolskim.</p>
+                    <div class="bg-zinc-900 rounded-xl p-10 text-center border border-zinc-800/80 shadow-sm reveal-on-scroll">
+                        <p class="text-zinc-500 text-sm">Obecnie brak wystarczających danych do wygenerowania analizy.</p>
                     </div>
                 {% endfor %}
             </div>
 
-            <!-- NOWA PAGINACJA: Niewidzialny trigger dla Infinite Scrolla z kręcącym się kółkiem -->
+            <!-- INFINITE SCROLL LOADER -->
             {% if page_obj.has_next %}
-                <div id="infinite-scroll-trigger" data-next-url="?page={{ page_obj.next_page_number }}" class="flex justify-center items-center py-8 opacity-0 transition-opacity duration-300">
-                    <svg class="w-8 h-8 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div id="infinite-scroll-trigger" data-next-url="?page={{ page_obj.next_page_number }}" class="flex justify-center items-center py-6 opacity-0 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-zinc-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
                 </div>
             {% endif %}
         </div>
 
-        <!-- Prawa strona (Sidebar z analizą) - Floating / Sticky -->
-        <aside class="md:col-span-4 reveal-on-scroll">
-            <div class="sticky top-24">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4 px-1 flex items-center justify-between">
-                    Live Insights
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
-                </h3>
+        <!-- SIDEBAR -->
+        <aside class="lg:col-span-4 reveal-on-scroll">
+            <div class="sticky top-24 flex flex-col gap-6">
 
-                <!-- Widżet "Martwe Pole" z radarem AI -->
-                <div class="bg-[#1c1c1c] border border-[#2a2a2a] p-6 rounded-xl shadow-xl relative overflow-hidden group cursor-pointer hover:border-[#444] transition-colors">
-
-                    <!-- Dynamiczne tło (Radar Sweep / Pulsowanie) -->
-                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-red-600/10 rounded-full animate-pulse-slow"></div>
-                    <div class="absolute -right-16 -top-16 w-48 h-48 border border-red-900/20 rounded-full animate-ping-slow"></div>
-
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-2 mb-3 bg-red-900/20 border border-red-900/50 w-max px-2.5 py-1 rounded">
-                            <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                            <h3 class="font-bold text-[10px] uppercase tracking-wider text-red-400">Wykryto Martwe Pole</h3>
+                <!-- WIDŻET: Martwe Pole (Blindspot) -->
+                <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-zinc-800/50 px-5 py-3 border-b border-zinc-800 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-zinc-100">Martwe Pole</h3>
                         </div>
-                        <p class="text-xs text-gray-400 mb-5 leading-relaxed font-medium">Algorytm wykrył temat ignorowany przez wybrane spektrum mediów.</p>
+                        <span class="text-[10px] px-2 py-0.5 bg-rose-500/10 text-rose-400 font-semibold rounded border border-rose-500/20">Wykryto</span>
+                    </div>
 
-                        <h4 class="text-lg font-bold leading-snug mb-6 text-white group-hover:text-red-400 transition-colors">
-                            Kontrowersyjne dotacje dla organizacji pozarządowych
+                    <div class="p-5 pattern-diagonal relative">
+                        <p class="text-xs text-zinc-400 mb-3 font-medium">Temat szeroko omawiany przez prawicę, niemal ignorowany w mediach lewicowych i centrowych.</p>
+
+                        <h4 class="text-base font-bold leading-snug mb-5 text-zinc-100">
+                            Kontrowersyjne dotacje dla organizacji pozarządowych – nowe dokumenty
                         </h4>
 
-                        <button class="w-full bg-[#222] text-white border border-[#2a2a2a] text-sm font-bold rounded px-4 py-3 hover:bg-white hover:text-black transition-all shadow-sm group-hover:shadow-md">
-                            Zobacz analizę
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[9px] uppercase text-zinc-500 mb-1">Pokrycie tematu</div>
+                            <div class="flex h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden gap-0.5">
+                                <div class="bg-bias-left w-[5%] opacity-30"></div>
+                                <div class="bg-bias-center w-[15%] opacity-30"></div>
+                                <div class="bg-bias-right w-[80%]"></div>
+                            </div>
+                        </div>
+
+                        <button class="w-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-xs font-bold rounded px-4 py-2 hover:bg-zinc-100 hover:text-zinc-900 transition-colors">
+                            Przejdź do analizy
                         </button>
                     </div>
+                </div>
+
+                <!-- WIDŻET: Bądź na bieżąco -->
+                <div class="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-5 text-center">
+                    <svg class="w-6 h-6 text-zinc-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <h4 class="text-sm font-bold text-zinc-200 mb-1">Bądź na bieżąco</h4>
+                    <p class="text-xs text-zinc-500 mb-3">Otrzymuj codzienne podsumowania baniek informacyjnych.</p>
+                    <button class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors">Skonfiguruj powiadomienia &rarr;</button>
                 </div>
             </div>
         </aside>
     </main>
 
-    <footer class="border-t border-[#2a2a2a] mt-auto relative z-10 bg-[#121212]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-left">
-            <p class="text-xs text-[#6b7280] font-medium">&copy; 2024 Horyzont AI. Twój zaufany skaner informacyjny.</p>
+    <footer class="border-t border-zinc-800/80 bg-zinc-950 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-xs text-zinc-500 font-medium">&copy; 2024 Horyzont AI. Twój zaufany skaner informacyjny.</p>
             <div class="flex gap-6">
-                <a href="#" class="text-xs font-semibold text-[#6b7280] hover:text-white transition-colors">O nas</a>
-                <a href="#" class="text-xs font-semibold text-[#6b7280] hover:text-white transition-colors">Algorytm</a>
-                <a href="#" class="text-xs font-semibold text-[#6b7280] hover:text-white transition-colors">Kontakt</a>
+                <a href="#" class="text-xs font-medium text-zinc-500 hover:text-zinc-300 transition-colors">O nas</a>
+                <a href="#" class="text-xs font-medium text-zinc-500 hover:text-zinc-300 transition-colors">Metodologia</a>
+                <a href="#" class="text-xs font-medium text-zinc-500 hover:text-zinc-300 transition-colors">Kontakt</a>
             </div>
         </div>
     </footer>
 
-    <!-- Skrypt odpowiadający za interaktywność, animacje i Infinite Scroll -->
+    <!-- ZINTEGROWANE SKRYPTY (Animacje + Infinite Scroll) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. Zegarek i data ---
-            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute:'2-digit' };
+            // Zegarek
+            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
             const dateElement = document.getElementById('current-date');
+            if (dateElement) dateElement.innerText = new Date().toLocaleDateString('pl-PL', dateOptions);
 
-            function updateTime() {
-                if (dateElement) {
-                    dateElement.innerText = new Date().toLocaleDateString('pl-PL', dateOptions);
-                }
-            }
-            updateTime();
-            setInterval(updateTime, 60000);
-
-            // --- 2. Intersection Observer do ANIMACJI ---
-            const animationObserverOptions = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.1
-            };
-
+            // Intersection Observer (Animacje paska)
             const animationObserver = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
-
                         const biasSegments = entry.target.querySelectorAll('.bias-segment');
                         biasSegments.forEach(segment => {
                             setTimeout(() => {
                                 const targetWidth = segment.getAttribute('data-target-width');
-                                if (targetWidth) {
-                                    segment.style.width = targetWidth;
-                                }
-                            }, 300);
+                                if (targetWidth) segment.style.width = targetWidth;
+                            }, 150);
                         });
-
                         observer.unobserve(entry.target);
                     }
                 });
-            }, animationObserverOptions);
+            }, { threshold: 0.1 });
 
-            // Funkcja przypisująca animacje do elementów (odpala się przy starcie i przy dodaniu nowych kart)
             function observeElements(container = document) {
-                container.querySelectorAll('.reveal-on-scroll:not(.is-visible)').forEach(element => {
-                    animationObserver.observe(element);
-                });
+                container.querySelectorAll('.reveal-on-scroll:not(.is-visible)').forEach(el => animationObserver.observe(el));
             }
-            observeElements(); // Uruchom na start dla pierwszych elementów
+            observeElements();
 
-            // --- 3. INFINITE SCROLL (Ładowanie artykułów podczas scrollowania) ---
+            // Infinite Scroll
             let triggerElement = document.getElementById('infinite-scroll-trigger');
             const articlesContainer = document.getElementById('articles-container');
             let isFetching = false;
@@ -336,58 +274,44 @@
             if (triggerElement && articlesContainer) {
                 const scrollObserver = new IntersectionObserver(async (entries) => {
                     const trigger = entries[0];
-
-                    // Jeśli użytkownik dojechał do loadera, i nie ma w toku innego pobierania
                     if (trigger.isIntersecting && !isFetching) {
                         isFetching = true;
-                        triggerElement.classList.remove('opacity-0'); // Pokaż kręcące się kółko
+                        triggerElement.classList.remove('opacity-0');
 
                         const nextUrl = triggerElement.getAttribute('data-next-url');
 
                         try {
-                            // Pobierz kod HTML następnej strony
                             const response = await fetch(nextUrl);
                             if (!response.ok) throw new Error('Błąd ładowania danych');
 
                             const htmlText = await response.text();
+                            const doc = new DOMParser().parseFromString(htmlText, 'text/html');
 
-                            // Przetwórz otrzymany tekst na obiekt HTML
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(htmlText, 'text/html');
-
-                            // Wyciągnij nowe artykuły
                             const newArticles = doc.querySelectorAll('#articles-container article');
-
-                            // Dodaj artykuły do obecnej strony
                             newArticles.forEach(article => {
                                 articlesContainer.appendChild(article);
                             });
 
-                            // Uruchom animacje (fade-in oraz paski) dla nowo dodanych artykułów
                             observeElements(articlesContainer);
 
-                            // Sprawdź czy jest kolejna strona i zaktualizuj url na triggerze
                             const newTrigger = doc.getElementById('infinite-scroll-trigger');
                             if (newTrigger) {
-                                const newNextUrl = newTrigger.getAttribute('data-next-url');
-                                triggerElement.setAttribute('data-next-url', newNextUrl);
+                                triggerElement.setAttribute('data-next-url', newTrigger.getAttribute('data-next-url'));
                             } else {
-                                // Jeśli nowa strona nie ma triggera = to już ostatnia strona
                                 scrollObserver.disconnect();
                                 triggerElement.remove();
                             }
                         } catch (error) {
-                            console.error('Błąd podczas ładowania kolejnej strony:', error);
+                            console.error('Błąd Infinite Scroll:', error);
                         } finally {
                             isFetching = false;
                             if(document.getElementById('infinite-scroll-trigger')) {
-                                triggerElement.classList.add('opacity-0'); // Ukryj kółko do następnego scrolla
+                                triggerElement.classList.add('opacity-0');
                             }
                         }
                     }
-                }, { rootMargin: '200px' }); // rootMargin sprawia, że ładowanie zacznie się 200px zanim użytkownik dojedzie do końca!
+                }, { rootMargin: '200px' });
 
-                // Zacznij obserwować trigger
                 scrollObserver.observe(triggerElement);
             }
         });
