@@ -4,6 +4,8 @@ import feedparser
 import numpy as np
 import psycopg2
 import requests
+import json
+import re
 
 from analytics_engine.create_embeddings import (
     prepare_texts_for_embedding,
@@ -45,8 +47,7 @@ class ManageConnection:
                 conn.close()
 db_manager = ManageConnection(host='localhost', database='kontekst_db', user='newuser', password='password')
 
-import json
-import re
+
 
 
 def generate_tags_for_clusters():
@@ -470,10 +471,10 @@ def run_pipeline():
 
     print("\n✅ Koniec procesu. System wykonał pełen cykl.")
 
+    populate_cluster_titles()
+    generate_missing_summaries_for_large_clusters()
+    generate_tags_for_clusters()
 
-# run_pipeline()
+run_pipeline()
 
-# populate_cluster_titles()
 
-# generate_missing_summaries_for_large_clusters()
-generate_tags_for_clusters()
