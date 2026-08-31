@@ -12,13 +12,13 @@ def register_view(request):
         if form.is_valid():
             form.save()
 
-            return redirect('success_url')
+            return redirect('')
 
 
     else:
         form = RegisterUserForm()
 
-    return render(request,'accounts/register', {'form' : form})
+    return render(request,'accounts/register.html', {'form' : form})
 
 
 
