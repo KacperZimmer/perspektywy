@@ -104,6 +104,7 @@ def view_event(request, id):
 def index(request):
     clusters_to_show = []
 
+
     clusters = EmbeddedArticles.objects.defer('centroid').values(
         'cluster_id', 'cluster__updated_at', 'cluster__title'
     ).annotate(
@@ -154,5 +155,8 @@ def index(request):
     context = {
         'page_obj': page_obj,
     }
+    if request.user.is_authenticated:
+        context['username'] = request.user.username
+        context['authenticated'] = 'authenticated'
 
     return render(request, 'stories/index.html', context)
