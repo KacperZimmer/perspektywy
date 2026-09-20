@@ -7,7 +7,7 @@ from .forms import RegisterUserForm, UserLoginForm
 def login_view(request):
 
     if request.method == "POST":
-        form = UserLoginForm(request.POST)
+        form = UserLoginForm(request, data=request.POST)
 
         if form.is_valid():
 
@@ -15,7 +15,8 @@ def login_view(request):
             login(request,user)
 
             return redirect('/')
-
+        else:
+            print('blad')
     else:
         form = UserLoginForm()
 

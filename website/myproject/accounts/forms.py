@@ -8,7 +8,7 @@ from .models import User
 class RegisterUserForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        field = ['password',' username','first_name','last_name','email']
+        fields = ['username','first_name','last_name','email']
 
 class UserLoginForm(AuthenticationForm):
     username = forms.CharField(
