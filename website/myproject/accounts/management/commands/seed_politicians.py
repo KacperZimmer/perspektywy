@@ -25,7 +25,8 @@ class Command(BaseCommand):
             return
 
         for element in politicians_data[:limit]:
-            print(element)
+            print(type(element), element)
+
 
 
 
