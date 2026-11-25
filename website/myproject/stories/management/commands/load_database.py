@@ -2,14 +2,13 @@ from collections import defaultdict
 from contextlib import contextmanager
 import json
 import logging
-import os
 import re
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Callable, Dict, Generator, List, Optional
 
+from django.core.management.base import BaseCommand
+from django.db import DatabaseError, connection, transaction
 import feedparser
 import numpy as np
-import psycopg2
-from psycopg2.extensions import cursor as PgCursor
 import requests
 
 from analytics_engine.create_embeddings import (
@@ -19,53 +18,28 @@ from analytics_engine.create_embeddings import (
 from analytics_engine.llm import News_LLM
 from analytics_engine.sources_config import SOURCES
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
 POLITE_HEADERS = {"User-Agent": "KontekstBot/1.0 (+http://horyzonty.pl)"}
 HTML_TAG_REGEX = re.compile(r"<.*?>")
-DISTANCE_THRESHOLD = 0.30
+DEFAULT_DISTANCE_THRESHOLD = 0.30
 
 
 class DatabaseManager:
-    def __init__(self, host: str, database: str, user: str, password: str) -> None:
-        self.host = host
-        self.database = database
-        self.user = user
-        self.password = password
-
     @contextmanager
-    def get_cursor(self) -> Generator[PgCursor, None, None]:
-        conn = None
+    def get_cursor(self) -> Generator[Any, None, None]:
         try:
-            conn = psycopg2.connect(
-                host=self.host,
-                database=self.database,
-                user=self.user,
-                password=self.password,
-            )
-            with conn:
-                with conn.cursor() as cur:
+            with transaction.atomic():
+                with connection.cursor() as cur:
                     yield cur
-        except psycopg2.Error as e:
-            logging.error(f"Błąd bazy danych: {e}")
+        except DatabaseError as e:
+            logger.error("Błąd bazy danych: %s", e)
             raise
-        finally:
-            if conn:
-                conn.close()
 
     def get_publisher_map(self) -> Dict[str, int]:
         with self.get_cursor() as cur:
             cur.execute("SELECT name, id FROM stories_publisher;")
             return {name: pub_id for name, pub_id in cur.fetchall()}
-
-
-db_manager = DatabaseManager(
-    host=os.getenv("DB_HOST", "localhost"),
-    database=os.getenv("DB_NAME", "kontekst_db"),
-    user=os.getenv("DB_USER", "newuser"),
-    password=os.getenv("DB_PASSWORD", "password"),
-)
-llm_news = News_LLM("qwen3.6:35b")
 
 
 def clean_html(raw_html: Optional[str]) -> str:
@@ -137,7 +111,7 @@ class ClusterEnricher:
 
     def enrich_tags(self, min_articles: int = 5) -> None:
         query = """
-            SELECT c.id, c.ai_summary 
+            SELECT c.id, c.ai_summary
             FROM clusters c
             JOIN embedded_articles e ON c.id = e.cluster_id
             WHERE (c.tags IS NULL OR cardinality(c.tags) = 0 OR c.tags = '{}')
@@ -164,7 +138,12 @@ class ClusterEnricher:
                 cur.executemany("UPDATE clusters SET tags = %s WHERE id = %s;", updates)
 
 
-def save_data_to_postgres(embeddings_array: np.ndarray, article_list: List[Dict[str, Any]]) -> None:
+def save_data_to_postgres(
+    db_manager: DatabaseManager,
+    embeddings_array: np.ndarray,
+    article_list: List[Dict[str, Any]],
+    distance_threshold: float = DEFAULT_DISTANCE_THRESHOLD,
+) -> None:
     embeddings = embeddings_array.tolist()
 
     find_cluster_query = """
@@ -176,7 +155,7 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: List[Dict[
     insert_cluster_query = "INSERT INTO clusters (centroid) VALUES (%s::vector) RETURNING id;"
     touch_cluster_query = "UPDATE clusters SET updated_at = current_timestamp WHERE id = %s;"
     insert_article_query = """
-        INSERT INTO embedded_articles (cluster_id, title, url, source, embedding, publisher_id, article_description) 
+        INSERT INTO embedded_articles (cluster_id, title, url, source, embedding, publisher_id, article_description)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (url) DO NOTHING;
     """
@@ -187,7 +166,7 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: List[Dict[
             cur.execute(find_cluster_query, (embedding,))
             nearest = cur.fetchone()
 
-            if nearest and nearest[1] <= DISTANCE_THRESHOLD:
+            if nearest and nearest[1] <= distance_threshold:
                 cluster_id = nearest[0]
                 cur.execute(touch_cluster_query, (cluster_id,))
             else:
@@ -208,15 +187,24 @@ def save_data_to_postgres(embeddings_array: np.ndarray, article_list: List[Dict[
             )
 
 
-def process_batch(batch: List[Dict[str, Any]]) -> None:
+def process_batch(
+    db_manager: DatabaseManager,
+    batch: List[Dict[str, Any]],
+    distance_threshold: float = DEFAULT_DISTANCE_THRESHOLD,
+) -> None:
     if not batch:
         return
     clean_texts = prepare_texts_for_embedding(batch)
     embeddings = generate_embeddings(clean_texts)
-    save_data_to_postgres(embeddings, batch)
+    save_data_to_postgres(db_manager, embeddings, batch, distance_threshold=distance_threshold)
 
 
-def aggregate_news_articles(sources: List[Dict[str, Any]], batch_size: int = 20) -> None:
+def aggregate_news_articles(
+    db_manager: DatabaseManager,
+    sources: List[Dict[str, Any]],
+    batch_size: int = 20,
+    distance_threshold: float = DEFAULT_DISTANCE_THRESHOLD,
+) -> None:
     publisher_map = db_manager.get_publisher_map()
     batch = []
 
@@ -228,7 +216,7 @@ def aggregate_news_articles(sources: List[Dict[str, Any]], batch_size: int = 20)
             response = requests.get(source["url"], headers=POLITE_HEADERS, timeout=10)
             feed = feedparser.parse(response.content)
         except Exception as e:
-            logging.warning(f"Błąd sieci dla {source.get('name')}: {e}")
+            logger.warning("Błąd sieci dla %s: %s", source.get("name"), e)
             continue
 
         for entry in feed.entries:
@@ -258,14 +246,14 @@ def aggregate_news_articles(sources: List[Dict[str, Any]], batch_size: int = 20)
             })
 
             if len(batch) >= batch_size:
-                process_batch(batch)
+                process_batch(db_manager, batch, distance_threshold=distance_threshold)
                 batch.clear()
 
     if batch:
-        process_batch(batch)
+        process_batch(db_manager, batch, distance_threshold=distance_threshold)
 
 
-def print_db_clusters() -> None:
+def print_db_clusters(db_manager: DatabaseManager, write: Callable[[str], Any] = print) -> None:
     query = """
         SELECT c.id, a.source, a.title
         FROM clusters c
@@ -293,24 +281,85 @@ def print_db_clusters() -> None:
         sources = {a["source"] for a in articles}
         if len(sources) == 1:
             label = "POJEDYNCZY NEWS" if len(articles) == 1 else f"ŚLEPY PUNKT [{next(iter(sources))}]"
-            print(f"\n{label} (ID: {cluster_id}):")
+            write(f"\n{label} (ID: {cluster_id}):")
         else:
-            print(f"\nGŁÓWNY TEMAT (ID: {cluster_id}) [{len(sources)} źródeł, {len(articles)} artykułów]:")
+            write(f"\nGŁÓWNY TEMAT (ID: {cluster_id}) [{len(sources)} źródeł, {len(articles)} artykułów]:")
 
         for article in articles:
-            print(f"  - [{article['source']}] {article['title']}")
+            write(f"  - [{article['source']}] {article['title']}")
 
 
-def run_pipeline() -> None:
-    enricher = ClusterEnricher(db_manager, llm_news)
+class Command(BaseCommand):
+    help = "Scrape RSS news articles, generate embeddings, cluster them, and enrich clusters with LLM summaries, titles, and tags."
 
-    aggregate_news_articles(SOURCES, batch_size=20)
-    enricher.enrich_summaries()
-    enricher.enrich_titles()
-    enricher.enrich_tags()
+    def add_arguments(self, parser) -> None:
+        parser.add_argument(
+            "--batch-size",
+            type=int,
+            default=20,
+            help="Number of articles to embed and insert per batch (default: 20).",
+        )
+        parser.add_argument(
+            "--min-articles",
+            type=int,
+            default=5,
+            help="Minimum number of articles in a cluster before LLM enrichment (default: 5).",
+        )
+        parser.add_argument(
+            "--model",
+            type=str,
+            default="qwen3.6:35b",
+            help="Ollama model name for cluster enrichment (default: qwen3.6:35b).",
+        )
+        parser.add_argument(
+            "--distance-threshold",
+            type=float,
+            default=DEFAULT_DISTANCE_THRESHOLD,
+            help=f"Cosine distance threshold for assigning articles to existing clusters (default: {DEFAULT_DISTANCE_THRESHOLD}).",
+        )
+        parser.add_argument(
+            "--skip-enrichment",
+            action="store_true",
+            help="Skip LLM summary, title, and tag enrichment.",
+        )
+        parser.add_argument(
+            "--no-print",
+            action="store_true",
+            help="Do not print the resulting clusters at the end.",
+        )
 
-    print_db_clusters()
+    def handle(self, *args, **options) -> None:
+        batch_size = options["batch_size"]
+        min_articles = options["min_articles"]
+        model_name = options["model"]
+        distance_threshold = options["distance_threshold"]
+        skip_enrichment = options["skip_enrichment"]
+        no_print = options["no_print"]
 
+        db_manager = DatabaseManager()
 
-if __name__ == "__main__":
-    run_pipeline()
+        self.stdout.write(self.style.NOTICE("Aggregating and embedding news articles..."))
+        aggregate_news_articles(
+            db_manager,
+            SOURCES,
+            batch_size=batch_size,
+            distance_threshold=distance_threshold,
+        )
+
+        if not skip_enrichment:
+            llm_news = News_LLM(model_name)
+            enricher = ClusterEnricher(db_manager, llm_news)
+
+            self.stdout.write(self.style.NOTICE("Enriching cluster summaries..."))
+            enricher.enrich_summaries(min_articles=min_articles)
+
+            self.stdout.write(self.style.NOTICE("Enriching cluster titles..."))
+            enricher.enrich_titles(min_articles=min_articles)
+
+            self.stdout.write(self.style.NOTICE("Enriching cluster tags..."))
+            enricher.enrich_tags(min_articles=min_articles)
+
+        if not no_print:
+            print_db_clusters(db_manager, write=self.stdout.write)
+
+        self.stdout.write(self.style.SUCCESS("Database loading pipeline completed."))
